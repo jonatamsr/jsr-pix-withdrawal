@@ -1,7 +1,7 @@
 services:
-  hyperf-skeleton:
-    container_name: hyperf-skeleton
-    image: hyperf-skeleton
+  jsr-pix-withdrawal:
+    container_name: jsr-pix-withdrawal
+    image: jsr-pix-withdrawal
     build:
       dockerfile: dev.Dockerfile
       args:
@@ -17,4 +17,4 @@ services:
 
 networks:
   default:
-    name: hyperf-skeleton
+    name: jsr-pix-withdrawal

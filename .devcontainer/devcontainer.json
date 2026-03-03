@@ -1,7 +1,7 @@
 {
     "name": "jsr-pix-withdrawal",
     "dockerComposeFile": "../docker-compose.yml",
-    "service": "hyperf-skeleton",
+    "service": "jsr-pix-withdrawal",
     "workspaceFolder": "/opt/www",
     "shutdownAction": "stopCompose",
     "forwardPorts": [

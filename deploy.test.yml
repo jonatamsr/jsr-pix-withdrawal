@@ -3,7 +3,7 @@ services:
   hyperf:
     image: $REGISTRY_URL/$PROJECT_NAME:test
     environment:
-      - "APP_PROJECT=hyperf"
+      - "APP_PROJECT=jsr-pix-withdrawal"
       - "APP_ENV=testing"
     ports:
       - "9501:9501"
@@ -18,13 +18,13 @@ services:
         delay: 5s
         order: start-first
     networks:
-      - hyperf_net
+      - jsr-pix-withdrawal_net
     configs:
-      - source: hyperf_v1.0
+      - source: jsr-pix-withdrawal_v1.0
         target: /opt/www/.env
 configs:
-  hyperf_v1.0:
+  jsr-pix-withdrawal_v1.0:
     external: true
 networks:
-  hyperf_net:
+  jsr-pix-withdrawal_net:
     external: true
