@@ -1,5 +1,5 @@
 services:
-  jsr-pix-withdrawal:
+  app:
     container_name: jsr-pix-withdrawal
     image: jsr-pix-withdrawal
     build:
@@ -10,11 +10,51 @@ services:
     volumes:
       - ./:/opt/www
     ports:
-      - 9501:9501
+      - "9501:9501"
     environment:
       - APP_ENV=dev
       - SCAN_CACHEABLE=false
+    depends_on:
+      - mysql
+      - redis
+      - mailhog
+      - jaeger
 
-networks:
-  default:
-    name: jsr-pix-withdrawal
+  mysql:
+    container_name: jsr-pix-mysql
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: jsr_pix_withdrawal
+      MYSQL_USER: hyperf
+      MYSQL_PASSWORD: hyperf
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  redis:
+    container_name: jsr-pix-redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mailhog:
+    container_name: jsr-pix-mailhog
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  jaeger:
+    container_name: jsr-pix-jaeger
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "4318:4318"
+      - "16686:16686"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+volumes:
+  mysql_data:
