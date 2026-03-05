@@ -11,7 +11,6 @@ use ValueError;
 
 /**
  * @internal
- * @coversNothing
  */
 class WithdrawMethodTest extends TestCase
 {

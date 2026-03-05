@@ -38,13 +38,14 @@ return (new PhpCsFixer\Config())
         ],
         'ordered_imports' => [
             'imports_order' => [
-                'class', 'function', 'const',
+                'class',
+                'function',
+                'const',
             ],
             'sort_algorithm' => 'alpha',
         ],
         'single_line_comment_style' => [
-            'comment_types' => [
-            ],
+            'comment_types' => [],
         ],
         'yoda_style' => [
             'always_move_variable' => false,
@@ -71,6 +72,7 @@ return (new PhpCsFixer\Config())
         'not_operator_with_space' => false,
         'ordered_class_elements' => true,
         'php_unit_strict' => false,
+        'php_unit_test_class_requires_covers' => false,
         'phpdoc_separation' => false,
         'single_quote' => true,
         'standardize_not_equals' => true,

@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @internal
- * @coversNothing
  */
 class MoneyTest extends TestCase
 {
