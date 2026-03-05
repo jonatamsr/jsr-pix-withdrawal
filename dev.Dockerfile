@@ -24,6 +24,9 @@ ENV TIMEZONE=${timezone:-"America/Sao_Paulo"} \
 RUN addgroup -g ${GID} application && \
     adduser -S -D -u ${UID} -G application -s /bin/ash -h /home/application application
 
+# Install gRPC and protobuf extensions (required by open-telemetry/transport-grpc)
+RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf
+
 # update
 RUN set -ex \
     # show php version and extensions
@@ -38,6 +41,7 @@ RUN set -ex \
         echo "post_max_size=128M"; \
         echo "memory_limit=1G"; \
         echo "date.timezone=${TIMEZONE}"; \
+        echo "grpc.enable_fork_support=1"; \
     } | tee conf.d/99_overrides.ini \
     # - config timezone
     && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \

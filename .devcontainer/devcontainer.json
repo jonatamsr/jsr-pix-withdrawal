@@ -1,7 +1,7 @@
 {
     "name": "jsr-pix-withdrawal",
     "dockerComposeFile": "../docker-compose.yml",
-    "service": "jsr-pix-withdrawal",
+    "service": "app",
     "workspaceFolder": "/opt/www",
     "shutdownAction": "stopCompose",
     "forwardPorts": [
