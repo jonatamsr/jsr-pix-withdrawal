@@ -18,6 +18,9 @@ ENV TIMEZONE=${timezone:-"America/Sao_Paulo"} \
     APP_ENV=prod \
     SCAN_CACHEABLE=(true)
 
+# Install gRPC and protobuf extensions (required by open-telemetry/transport-grpc)
+RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf
+
 # update
 RUN set -ex \
     # show php version and extensions

@@ -24,6 +24,9 @@ ENV TIMEZONE=${timezone:-"America/Sao_Paulo"} \
 RUN addgroup -g ${GID} application && \
     adduser -S -D -u ${UID} -G application -s /bin/ash -h /home/application application
 
+# Install gRPC and protobuf extensions (required by open-telemetry/transport-grpc)
+RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf
+
 # update
 RUN set -ex \
     # show php version and extensions
