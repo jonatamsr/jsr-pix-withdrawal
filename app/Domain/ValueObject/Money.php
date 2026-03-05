@@ -8,7 +8,9 @@ use InvalidArgumentException;
 
 final readonly class Money
 {
-    private function __construct(private int $cents) {}
+    private function __construct(private int $cents)
+    {
+    }
 
     public static function zero(): self
     {
