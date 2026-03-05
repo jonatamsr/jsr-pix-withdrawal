@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace HyperfTest\Unit\Exception\Handler;
 
 use App\Exception\Handler\FormatsErrorResponse;
-use Hyperf\HttpMessage\Stream\SwooleStream;
+use Hyperf\HttpMessage\Base\Response;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -57,6 +57,6 @@ class FormatsErrorResponseTest extends TestCase
 
     private function createMockResponse(): ResponseInterface
     {
-        return new \Hyperf\HttpMessage\Base\Response();
+        return new Response();
     }
 }

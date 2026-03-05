@@ -13,7 +13,9 @@ class AppExceptionHandler extends ExceptionHandler
 {
     use FormatsErrorResponse;
 
-    public function __construct(protected StdoutLoggerInterface $logger) {}
+    public function __construct(protected StdoutLoggerInterface $logger)
+    {
+    }
 
     public function handle(Throwable $throwable, ResponseInterface $response)
     {

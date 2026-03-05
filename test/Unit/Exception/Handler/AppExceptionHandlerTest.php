@@ -39,7 +39,6 @@ class AppExceptionHandlerTest extends TestCase
 
     // -- handle --
 
-
     #[Test]
     public function handleReturnsGenericErrorBody(): void
     {

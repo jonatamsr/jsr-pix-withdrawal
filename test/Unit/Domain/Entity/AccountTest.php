@@ -11,8 +11,6 @@ use App\Domain\ValueObject\Uuid;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-use function PHPUnit\Framework\assertSame;
-
 /**
  * @internal
  */

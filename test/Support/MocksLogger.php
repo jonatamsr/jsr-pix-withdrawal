@@ -6,14 +6,12 @@ namespace HyperfTest\Support;
 
 use Hyperf\Contract\StdoutLoggerInterface;
 use Mockery;
+use Mockery\LegacyMockInterface;
 
 trait MocksLogger
 {
-    protected function silentLogger(): StdoutLoggerInterface
+    protected function silentLogger(): LegacyMockInterface|StdoutLoggerInterface
     {
-        /** @var StdoutLoggerInterface $logger */
-        $logger = Mockery::mock(StdoutLoggerInterface::class)->shouldIgnoreMissing();
-
-        return $logger;
+        return Mockery::mock(StdoutLoggerInterface::class)->shouldIgnoreMissing();
     }
 }

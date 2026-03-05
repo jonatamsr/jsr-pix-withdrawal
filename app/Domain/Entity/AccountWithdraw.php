@@ -22,7 +22,8 @@ class AccountWithdraw
         private bool $error,
         private ?string $errorReason,
         private readonly DateTimeImmutable $createdAt
-    ) {}
+    ) {
+    }
 
     public static function createImmediate(
         Uuid $id,
