@@ -40,7 +40,7 @@ class BusinessExceptionHandlerTest extends TestCase
     // -- handle --
 
     #[Test]
-    public function handleReturnsCorrectJsonBodyForInsufficientBalance(): void
+    public function handleDelegatesCodeMessageAndStatusFromException(): void
     {
         $exception = new InsufficientBalanceException();
         $response = new Response();
@@ -48,9 +48,9 @@ class BusinessExceptionHandlerTest extends TestCase
         $result = $this->handler->handle($exception, $response);
         $body = json_decode((string) $result->getBody(), true);
 
-        $this->assertSame('INSUFFICIENT_BALANCE', $body['code']);
-        $this->assertSame('Insufficient balance to complete this withdrawal', $body['message']);
-        $this->assertSame(422, $result->getStatusCode());
+        $this->assertSame($exception->getErrorCode(), $body['code']);
+        $this->assertSame($exception->getMessage(), $body['message']);
+        $this->assertSame($exception->getHttpStatusCode(), $result->getStatusCode());
         $this->assertNull($body['details']);
     }
 
