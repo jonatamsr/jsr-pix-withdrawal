@@ -42,6 +42,7 @@ RUN set -ex \
         echo "post_max_size=128M"; \
         echo "memory_limit=1G"; \
         echo "date.timezone=${TIMEZONE}"; \
+        echo "grpc.enable_fork_support=1"; \
     } | tee conf.d/99_overrides.ini \
     # - config Xdebug (off by default, enabled on demand via XDEBUG_MODE env)
     && { \
