@@ -20,11 +20,11 @@ final readonly class Money
     public static function fromFloat(float $value): self
     {
         if ($value < 0) {
-            throw new InvalidArgumentException("Money cannot be negative");
+            throw new InvalidArgumentException('Money cannot be negative');
         }
 
         if (round($value, 2) != $value) {
-            throw new InvalidArgumentException("Money must have at most 2 decimal places");
+            throw new InvalidArgumentException('Money must have at most 2 decimal places');
         }
 
         return new self((int) round($value * 100));
@@ -32,8 +32,8 @@ final readonly class Money
 
     public static function fromString(string $value): self
     {
-        if (!preg_match('/^\d+(\.\d{1,2})?$/', $value)) {
-            throw new InvalidArgumentException("Invalid money format: $value");
+        if (! preg_match('/^\d+(\.\d{1,2})?$/', $value)) {
+            throw new InvalidArgumentException("Invalid money format: {$value}");
         }
 
         $parts = explode('.', $value);
@@ -56,8 +56,8 @@ final readonly class Money
         if ($result < 0) {
             $resultDecimal = number_format($result / 100, 2, '.', '');
             throw new InvalidArgumentException(
-                $message = "Subtraction would result in negative value:"
-                    . " {$this->toDecimal()} - {$otherAmount->toDecimal()} = $resultDecimal"
+                $message = 'Subtraction would result in negative value:'
+                    . " {$this->toDecimal()} - {$otherAmount->toDecimal()} = {$resultDecimal}"
             );
         }
 
@@ -69,4 +69,3 @@ final readonly class Money
         return $this->cents >= $other->cents;
     }
 }
-

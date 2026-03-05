@@ -15,7 +15,7 @@ enum PixKeyType: string
         if ($key === '') {
             throw new InvalidArgumentException('PIX key cannot be empty');
         }
-        
+
         match ($this) {
             self::EMAIL => self::validateEmail($key),
         };

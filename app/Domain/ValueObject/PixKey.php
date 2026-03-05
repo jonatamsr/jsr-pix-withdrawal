@@ -20,7 +20,7 @@ final readonly class PixKey
         $normalizedType = strtolower($type);
 
         $pixKeyType = PixKeyType::tryFrom($normalizedType)
-            ?? throw new InvalidArgumentException("Invalid PIX key type: $type");
+            ?? throw new InvalidArgumentException("Invalid PIX key type: {$type}");
 
         $key = trim($key);
 
@@ -39,4 +39,3 @@ final readonly class PixKey
         return $this->key;
     }
 }
-

@@ -7,9 +7,11 @@ namespace HyperfTest\Unit\Domain\Enum;
 use App\Domain\Enum\WithdrawMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ValueError;
 
 /**
  * @internal
+ * @coversNothing
  */
 class WithdrawMethodTest extends TestCase
 {
@@ -38,7 +40,7 @@ class WithdrawMethodTest extends TestCase
     #[Test]
     public function fromThrowsOnUnsupportedMethod(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         WithdrawMethod::from('BOLETO');
     }
