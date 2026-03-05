@@ -11,7 +11,7 @@ declare(strict_types=1);
  */
 use Hyperf\ExceptionHandler\Listener\ErrorExceptionHandler;
 
-/**
+/*
  * This file is part of Hyperf.
  *
  * @see     https://www.hyperf.io
