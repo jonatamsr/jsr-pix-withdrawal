@@ -35,6 +35,7 @@ RUN set -ex \
         echo "post_max_size=128M"; \
         echo "memory_limit=1G"; \
         echo "date.timezone=${TIMEZONE}"; \
+        echo "grpc.enable_fork_support=1"; \
     } | tee conf.d/99_overrides.ini \
     # - config timezone
     && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
@@ -42,6 +43,9 @@ RUN set -ex \
     # ---------- clear works ----------
     && rm -rf /var/cache/apk/* /tmp/* /usr/share/man \
     && echo -e "\033[42;37m Build Completed :).\033[0m\n"
+
+# Install gRPC and protobuf extensions (required by open-telemetry/transport-grpc)
+RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf
 
 WORKDIR /opt/www
 
