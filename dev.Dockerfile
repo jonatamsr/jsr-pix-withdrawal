@@ -25,7 +25,8 @@ RUN addgroup -g ${GID} application && \
     adduser -S -D -u ${UID} -G application -s /bin/ash -h /home/application application
 
 # Install gRPC and protobuf extensions (required by open-telemetry/transport-grpc)
-RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf
+# Install Xdebug for debugging unit tests
+RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf php84-pecl-xdebug
 
 # update
 RUN set -ex \
@@ -42,6 +43,19 @@ RUN set -ex \
         echo "memory_limit=1G"; \
         echo "date.timezone=${TIMEZONE}"; \
     } | tee conf.d/99_overrides.ini \
+    # - config Xdebug (off by default, enabled on demand via XDEBUG_MODE env)
+    && { \
+        echo "zend_extension=xdebug.so"; \
+        echo "xdebug.mode=off"; \
+        echo "xdebug.client_host=host.docker.internal"; \
+        echo "xdebug.client_port=9003"; \
+        echo "xdebug.start_with_request=yes"; \
+        echo "xdebug.idekey=VSCODE"; \
+    } | tee conf.d/98_xdebug.ini \
+    # - config gRPC fork support
+    && { \
+        echo "grpc.enable_fork_support=1"; \
+    } | tee conf.d/97_grpc.ini \
     # - config timezone
     && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
     && echo "${TIMEZONE}" > /etc/timezone \
