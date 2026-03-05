@@ -8,6 +8,7 @@ use App\Domain\Entity\Account;
 use App\Domain\Exception\InsufficientBalanceException;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -95,5 +96,16 @@ class AccountTest extends TestCase
         }
 
         $this->assertSame('100.00', $account->balance()->toDecimal());
+    }
+
+    #[Test]
+    public function withdrawThrowsOnZeroAmount(): void
+    {
+        $account = Account::create(Uuid::generate(), 'John Doe', Money::fromFloat(100.00));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Withdraw amount must be greater than zero');
+
+        $account->withdraw(Money::zero());
     }
 }

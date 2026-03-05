@@ -7,6 +7,7 @@ namespace App\Domain\Entity;
 use App\Domain\Exception\InsufficientBalanceException;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
+use InvalidArgumentException;
 
 class Account
 {
@@ -24,6 +25,10 @@ class Account
 
     public function withdraw(Money $amount): void
     {
+        if ($amount->isZero()) {
+            throw new InvalidArgumentException('Withdraw amount must be greater than zero');
+        }
+
         if (! $this->balance->isGreaterThanOrEqual($amount)) {
             throw new InsufficientBalanceException();
         }
