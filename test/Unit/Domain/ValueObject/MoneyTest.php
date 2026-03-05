@@ -279,4 +279,21 @@ class MoneyTest extends TestCase
 
         $this->assertSame('9999999999.00', $money->toDecimal());
     }
+
+    // -- isZero --
+
+    #[Test]
+    public function isZeroReturnsTrueForZero(): void
+    {
+        $this->assertTrue(Money::zero()->isZero());
+        $this->assertTrue(Money::fromFloat(0.00)->isZero());
+        $this->assertTrue(Money::fromString('0.00')->isZero());
+    }
+
+    #[Test]
+    public function isZeroReturnsFalseForNonZero(): void
+    {
+        $this->assertFalse(Money::fromFloat(0.01)->isZero());
+        $this->assertFalse(Money::fromFloat(100.00)->isZero());
+    }
 }
