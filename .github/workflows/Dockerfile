@@ -40,6 +40,9 @@ RUN set -ex \
     && rm -rf /var/cache/apk/* /tmp/* /usr/share/man \
     && echo -e "\033[42;37m Build Completed :).\033[0m\n"
 
+# Install gRPC and protobuf extensions (required by open-telemetry/transport-grpc)
+RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf
+
 WORKDIR /opt/www
 
 # Composer Cache
@@ -47,7 +50,7 @@ WORKDIR /opt/www
 # RUN composer install --no-dev --no-scripts
 
 COPY . /opt/www
-RUN print "\n" | composer install -o && php bin/hyperf.php
+RUN composer install --no-dev -o && php bin/hyperf.php
 
 EXPOSE 9501
 
