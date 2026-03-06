@@ -53,17 +53,10 @@ The service follows **Hexagonal Architecture** (Ports & Adapters), cleanly separ
 
 ## Quick Start
 
-### 1. Clone & start the containers
+### 1. Clone
 
 ```bash
 git clone https://github.com/jonatamsr/jsr-pix-withdrawal && cd jsr-pix-withdrawal
-docker compose up -d
-```
-
-Wait a few seconds for MySQL to be healthy. You can verify with:
-
-```bash
-docker compose logs -f app
 ```
 
 ### 2. Install dependencies (first run only)
@@ -71,7 +64,15 @@ docker compose logs -f app
 Dependencies are installed during the image build. If you need to refresh them:
 
 ```bash
-docker compose exec app composer install
+docker run --rm -v $(pwd):/app composer install --ignore-platform-reqs
+cp .env.example .env
+make up
+```
+
+Wait a few seconds for MySQL to be healthy. You can verify with:
+
+```bash
+docker compose logs -f app
 ```
 
 ### 3. Run database migrations
