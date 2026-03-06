@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Infrastructure\Listener\LogWithdrawFailedListener;
-use App\Infrastructure\Listener\SendWithdrawNotificationListener;
 use Hyperf\ExceptionHandler\Listener\ErrorExceptionHandler;
 
 /*
@@ -17,6 +15,4 @@ use Hyperf\ExceptionHandler\Listener\ErrorExceptionHandler;
 
 return [
     ErrorExceptionHandler::class,
-    SendWithdrawNotificationListener::class,
-    LogWithdrawFailedListener::class,
 ];
