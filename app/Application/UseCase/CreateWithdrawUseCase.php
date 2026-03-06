@@ -21,10 +21,13 @@ use App\Domain\Strategy\WithdrawMethodData;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
 use DateTimeImmutable;
+use DateTimeZone;
 use Psr\Log\LoggerInterface;
 
 class CreateWithdrawUseCase
 {
+    private const string CLIENT_TIMEZONE = 'America/Sao_Paulo';
+
     public function __construct(
         private readonly AccountRepositoryInterface $accountRepository,
         private readonly WithdrawRepositoryInterface $withdrawRepository,
@@ -32,8 +35,7 @@ class CreateWithdrawUseCase
         private readonly WithdrawMethodFactory $factory,
         private readonly LoggerInterface $logger,
         private readonly TransactionManagerInterface $transactionManager,
-    ) {
-    }
+    ) {}
 
     public function execute(CreateWithdrawInput $input): CreateWithdrawOutput
     {
@@ -121,13 +123,18 @@ class CreateWithdrawUseCase
 
     private function parseScheduleDate(string $schedule): DateTimeImmutable
     {
-        $date = DateTimeImmutable::createFromFormat('Y-m-d H:i', $schedule);
+        $clientTz = new DateTimeZone(self::CLIENT_TIMEZONE);
+        $utcTz = new DateTimeZone('UTC');
+
+        $date = DateTimeImmutable::createFromFormat('Y-m-d H:i', $schedule, $clientTz);
 
         if ($date === false) {
             throw InvalidScheduleDateException::invalidFormat($schedule);
         }
 
-        if ($date <= new DateTimeImmutable()) {
+        $date = $date->setTimezone($utcTz);
+
+        if ($date <= new DateTimeImmutable('now', $utcTz)) {
             throw InvalidScheduleDateException::inThePast();
         }
 
@@ -142,9 +149,10 @@ class CreateWithdrawUseCase
             method: $withdraw->method()->value,
             amount: (float) $withdraw->amount()->toDecimal(),
             scheduled: $withdraw->isScheduled(),
-            scheduledFor: $withdraw->scheduledFor()?->format('Y-m-d H:i:s'),
+            scheduledFor: $withdraw->scheduledFor()
+                ?->setTimezone(new DateTimeZone(self::CLIENT_TIMEZONE))
+                ->format('Y-m-d H:i:s'),
             done: $withdraw->isDone(),
-            createdAt: $withdraw->createdAt()->format(DateTimeImmutable::ATOM),
         );
     }
 }

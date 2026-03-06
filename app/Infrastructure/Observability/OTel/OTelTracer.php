@@ -101,13 +101,13 @@ final class OTelTracer implements Tracer
             });
         }
 
-        // Set start time
+        // Set start time (Hyperf/Zipkin passes microseconds)
         $startTime = $otOptions->getStartTime();
         if ($startTime !== null) {
             if ($startTime instanceof DateTimeInterface) {
                 $nanos = (int) ($startTime->format('U.u') * 1_000_000_000);
             } else {
-                $nanos = (int) ($startTime * 1_000_000_000);
+                $nanos = (int) ($startTime * 1_000);
             }
             $spanBuilder->setStartTimestamp($nanos);
         }

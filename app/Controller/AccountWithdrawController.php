@@ -13,8 +13,7 @@ class AccountWithdrawController extends AbstractController
 {
     public function __construct(
         private readonly CreateWithdrawUseCase $useCase,
-    ) {
-    }
+    ) {}
 
     public function withdraw(string $accountId, CreateWithdrawRequest $request): ResponseInterface
     {
@@ -38,7 +37,6 @@ class AccountWithdrawController extends AbstractController
             'scheduled' => $output->scheduled,
             'scheduled_for' => $output->scheduledFor,
             'done' => $output->done,
-            'created_at' => $output->createdAt,
         ])->withStatus(201);
     }
 }

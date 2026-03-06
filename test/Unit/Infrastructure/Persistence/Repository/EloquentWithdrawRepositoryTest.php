@@ -71,7 +71,7 @@ class EloquentWithdrawRepositoryTest extends TestCase
         );
 
         $this->withdrawModel->shouldReceive('newQuery')->once()->andReturn($this->withdrawQueryBuilder);
-        $this->withdrawQueryBuilder->shouldReceive('updateOrInsert')
+        $this->withdrawQueryBuilder->shouldReceive('updateOrCreate')
             ->once()
             ->withArgs(function (array $conditions, array $data) {
                 return $conditions === ['id' => '550e8400-e29b-41d4-a716-446655440001']
@@ -102,7 +102,7 @@ class EloquentWithdrawRepositoryTest extends TestCase
         $pixData = new PixWithdrawData($pixKey);
 
         $this->withdrawModel->shouldReceive('newQuery')->once()->andReturn($this->withdrawQueryBuilder);
-        $this->withdrawQueryBuilder->shouldReceive('updateOrInsert')
+        $this->withdrawQueryBuilder->shouldReceive('updateOrCreate')
             ->once()
             ->withArgs(function (array $conditions, array $data) {
                 return $conditions === ['id' => '550e8400-e29b-41d4-a716-446655440001']
@@ -111,7 +111,7 @@ class EloquentWithdrawRepositoryTest extends TestCase
             });
 
         $this->pixModel->shouldReceive('newQuery')->once()->andReturn($this->pixQueryBuilder);
-        $this->pixQueryBuilder->shouldReceive('updateOrInsert')
+        $this->pixQueryBuilder->shouldReceive('updateOrCreate')
             ->with(
                 ['account_withdraw_id' => '550e8400-e29b-41d4-a716-446655440001'],
                 [

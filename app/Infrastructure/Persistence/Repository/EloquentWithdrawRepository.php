@@ -21,14 +21,13 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
         private readonly AccountWithdrawModel $withdrawModel,
         private readonly AccountWithdrawPixModel $pixModel,
         private readonly WithdrawMapper $mapper,
-    ) {
-    }
+    ) {}
 
     public function save(AccountWithdraw $withdraw, ?WithdrawMethodData $methodData = null): void
     {
         $data = $this->mapper->toModel($withdraw);
 
-        $this->withdrawModel->newQuery()->updateOrInsert(
+        $this->withdrawModel->newQuery()->updateOrCreate(
             ['id' => $data['id']],
             $data,
         );
@@ -36,7 +35,7 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
         if ($methodData instanceof PixWithdrawData) {
             $pixKey = $methodData->getPixKey();
 
-            $this->pixModel->newQuery()->updateOrInsert(
+            $this->pixModel->newQuery()->updateOrCreate(
                 ['account_withdraw_id' => $withdraw->id()->value()],
                 [
                     'account_withdraw_id' => $withdraw->id()->value(),
@@ -61,7 +60,7 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
 
         $models->loadMissing($models->pluck('method')->unique()->all());
 
-        return $models->map(fn (AccountWithdrawModel $model) => new PendingWithdrawal(
+        return $models->map(fn(AccountWithdrawModel $model) => new PendingWithdrawal(
             $this->mapper->toDomain($model),
             $this->resolveMethodData($model),
         ))->all();

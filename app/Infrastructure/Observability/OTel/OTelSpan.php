@@ -48,7 +48,8 @@ final class OTelSpan implements Span
         if ($finishTime instanceof DateTimeInterface) {
             $endNanos = (int) ($finishTime->format('U.u') * 1_000_000_000);
         } elseif (is_float($finishTime) || is_int($finishTime)) {
-            $endNanos = (int) ($finishTime * 1_000_000_000);
+            // Hyperf/Zipkin passes microseconds, convert to nanoseconds
+            $endNanos = (int) ($finishTime * 1_000);
         }
 
         $this->span->end($endNanos);

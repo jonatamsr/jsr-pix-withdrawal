@@ -83,7 +83,7 @@ class CreateWithdrawUseCaseTest extends TestCase
 
         $this->accountRepo->shouldReceive('save')
             ->once()
-            ->with(Mockery::on(fn (Account $account) => $account->balance()->toDecimal() === '849.25'));
+            ->with(Mockery::on(fn(Account $account) => $account->balance()->toDecimal() === '849.25'));
 
         $this->withdrawRepo->shouldReceive('save')
             ->once()

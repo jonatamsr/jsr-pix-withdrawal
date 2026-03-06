@@ -75,7 +75,7 @@ class OTelSpanTest extends TestCase
     {
         $this->otelSpan->shouldReceive('end')
             ->once()
-            ->with(Mockery::on(fn (int $nanos) => $nanos > 0));
+            ->with(Mockery::on(fn(int $nanos) => $nanos > 0));
 
         $this->span->finish(1609459200.5);
     }
@@ -85,7 +85,7 @@ class OTelSpanTest extends TestCase
     {
         $this->otelSpan->shouldReceive('end')
             ->once()
-            ->with(Mockery::on(fn (int $nanos) => $nanos === 1_000_000_000));
+            ->with(Mockery::on(fn(int $nanos) => $nanos === 1_000));
 
         $this->span->finish(1);
     }
@@ -97,7 +97,7 @@ class OTelSpanTest extends TestCase
 
         $this->otelSpan->shouldReceive('end')
             ->once()
-            ->with(Mockery::on(fn (int $nanos) => $nanos > 0));
+            ->with(Mockery::on(fn(int $nanos) => $nanos > 0));
 
         $this->span->finish($dt);
     }

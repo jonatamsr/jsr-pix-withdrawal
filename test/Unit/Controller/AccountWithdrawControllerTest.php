@@ -66,7 +66,6 @@ class AccountWithdrawControllerTest extends TestCase
             scheduled: false,
             scheduledFor: null,
             done: true,
-            createdAt: '2026-03-06 10:00:00',
         );
 
         $this->useCase->shouldReceive('execute')
@@ -91,8 +90,7 @@ class AccountWithdrawControllerTest extends TestCase
                     && $body['amount'] === 150.75
                     && $body['scheduled'] === false
                     && $body['scheduled_for'] === null
-                    && $body['done'] === true
-                    && $body['created_at'] === '2026-03-06 10:00:00';
+                    && $body['done'] === true;
             }))
             ->andReturn($psrResponse);
 
@@ -128,7 +126,6 @@ class AccountWithdrawControllerTest extends TestCase
             scheduled: true,
             scheduledFor: '2026-03-10 14:30:00',
             done: false,
-            createdAt: '2026-03-06 10:00:00',
         );
 
         $this->useCase->shouldReceive('execute')
@@ -180,7 +177,6 @@ class AccountWithdrawControllerTest extends TestCase
             scheduled: false,
             scheduledFor: null,
             done: true,
-            createdAt: '2026-03-06 12:00:00',
         );
 
         $this->useCase->shouldReceive('execute')
@@ -221,7 +217,6 @@ class AccountWithdrawControllerTest extends TestCase
             scheduled: false,
             scheduledFor: null,
             done: true,
-            createdAt: '2026-03-06 12:00:00',
         );
 
         $this->useCase->shouldReceive('execute')
@@ -259,12 +254,11 @@ class AccountWithdrawControllerTest extends TestCase
             scheduled: false,
             scheduledFor: null,
             done: true,
-            createdAt: '2026-03-06 15:00:00',
         );
 
         $this->useCase->shouldReceive('execute')->andReturn($output);
 
-        $expectedKeys = ['id', 'account_id', 'method', 'amount', 'scheduled', 'scheduled_for', 'done', 'created_at'];
+        $expectedKeys = ['id', 'account_id', 'method', 'amount', 'scheduled', 'scheduled_for', 'done'];
 
         $this->response->shouldReceive('json')
             ->once()

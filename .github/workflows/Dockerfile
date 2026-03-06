@@ -11,10 +11,10 @@ LABEL maintainer="Hyperf Developers <group@hyperf.io>" version="1.0" license="MI
 ##
 # ---------- env settings ----------
 ##
-# --build-arg timezone=America/Sao_Paulo
+# --build-arg timezone=UTC
 ARG timezone
 
-ENV TIMEZONE=${timezone:-"America/Sao_Paulo"} \
+ENV TIMEZONE=${timezone:-"UTC"} \
     APP_ENV=prod \
     SCAN_CACHEABLE=(true)
 

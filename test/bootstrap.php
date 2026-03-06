@@ -10,7 +10,7 @@ ini_set('display_errors', 'on');
 ini_set('display_startup_errors', 'on');
 
 error_reporting(E_ALL);
-date_default_timezone_set('America/Sao_Paulo');
+date_default_timezone_set('UTC');
 
 putenv('APP_ENV=testing');
 $_ENV['APP_ENV'] = 'testing';
