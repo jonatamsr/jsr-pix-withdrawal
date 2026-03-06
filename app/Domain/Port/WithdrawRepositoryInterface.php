@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\Port;
 
 use App\Domain\Entity\AccountWithdraw;
-use App\Domain\Entity\AccountWithdrawPix;
+use App\Domain\Strategy\WithdrawMethodData;
 
 interface WithdrawRepositoryInterface
 {
-    public function save(AccountWithdraw $withdraw, ?AccountWithdrawPix $pix = null): void;
+    public function save(AccountWithdraw $withdraw, ?WithdrawMethodData $methodData = null): void;
 
     /**
      * @return AccountWithdraw[]

@@ -15,17 +15,25 @@ use PHPUnit\Framework\TestCase;
 class InvalidScheduleDateExceptionTest extends TestCase
 {
     #[Test]
-    public function hasCorrectMessage(): void
+    public function inThePastHasCorrectMessage(): void
     {
-        $exception = new InvalidScheduleDateException();
+        $exception = InvalidScheduleDateException::inThePast();
 
         $this->assertSame('The schedule date must be in the future', $exception->getMessage());
     }
 
     #[Test]
+    public function invalidFormatHasCorrectMessage(): void
+    {
+        $exception = InvalidScheduleDateException::invalidFormat('not-a-date');
+
+        $this->assertSame('Invalid schedule date format: not-a-date. Expected format: Y-m-d H:i', $exception->getMessage());
+    }
+
+    #[Test]
     public function hasCorrectErrorCode(): void
     {
-        $exception = new InvalidScheduleDateException();
+        $exception = InvalidScheduleDateException::inThePast();
 
         $this->assertSame('INVALID_SCHEDULE_DATE', $exception->getErrorCode());
     }
@@ -33,7 +41,7 @@ class InvalidScheduleDateExceptionTest extends TestCase
     #[Test]
     public function extendsBusinessException(): void
     {
-        $exception = new InvalidScheduleDateException();
+        $exception = InvalidScheduleDateException::inThePast();
 
         $this->assertInstanceOf(BusinessException::class, $exception);
     }
@@ -41,7 +49,7 @@ class InvalidScheduleDateExceptionTest extends TestCase
     #[Test]
     public function hasDefaultHttpStatusCode(): void
     {
-        $exception = new InvalidScheduleDateException();
+        $exception = InvalidScheduleDateException::inThePast();
 
         $this->assertSame(422, $exception->getHttpStatusCode());
     }
