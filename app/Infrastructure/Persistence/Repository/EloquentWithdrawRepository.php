@@ -21,7 +21,8 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
         private readonly AccountWithdrawModel $withdrawModel,
         private readonly AccountWithdrawPixModel $pixModel,
         private readonly WithdrawMapper $mapper,
-    ) {}
+    ) {
+    }
 
     public function save(AccountWithdraw $withdraw, ?WithdrawMethodData $methodData = null): void
     {
@@ -60,7 +61,7 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
 
         $models->loadMissing($models->pluck('method')->unique()->all());
 
-        return $models->map(fn(AccountWithdrawModel $model) => new PendingWithdrawal(
+        return $models->map(fn (AccountWithdrawModel $model) => new PendingWithdrawal(
             $this->mapper->toDomain($model),
             $this->resolveMethodData($model),
         ))->all();

@@ -13,7 +13,8 @@ class AccountWithdrawController extends AbstractController
 {
     public function __construct(
         private readonly CreateWithdrawUseCase $useCase,
-    ) {}
+    ) {
+    }
 
     public function withdraw(string $accountId, CreateWithdrawRequest $request): ResponseInterface
     {
