@@ -14,7 +14,6 @@ final readonly class CreateWithdrawOutput
         public bool $scheduled,
         public ?string $scheduledFor,
         public bool $done,
-        public string $createdAt,
     ) {
     }
 }

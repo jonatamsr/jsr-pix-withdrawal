@@ -28,7 +28,7 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
     {
         $data = $this->mapper->toModel($withdraw);
 
-        $this->withdrawModel->newQuery()->updateOrInsert(
+        $this->withdrawModel->newQuery()->updateOrCreate(
             ['id' => $data['id']],
             $data,
         );
@@ -36,7 +36,7 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
         if ($methodData instanceof PixWithdrawData) {
             $pixKey = $methodData->getPixKey();
 
-            $this->pixModel->newQuery()->updateOrInsert(
+            $this->pixModel->newQuery()->updateOrCreate(
                 ['account_withdraw_id' => $withdraw->id()->value()],
                 [
                     'account_withdraw_id' => $withdraw->id()->value(),

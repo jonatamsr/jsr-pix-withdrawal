@@ -38,7 +38,6 @@ class AccountWithdrawController extends AbstractController
             'scheduled' => $output->scheduled,
             'scheduled_for' => $output->scheduledFor,
             'done' => $output->done,
-            'created_at' => $output->createdAt,
         ])->withStatus(201);
     }
 }
