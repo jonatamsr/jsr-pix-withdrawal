@@ -20,7 +20,8 @@ class ProcessScheduledWithdrawsCrontab
     public function __construct(
         private readonly ProcessScheduledWithdrawsUseCase $useCase,
         private readonly StdoutLoggerInterface $logger,
-    ) {}
+    ) {
+    }
 
     public function execute(): void
     {
