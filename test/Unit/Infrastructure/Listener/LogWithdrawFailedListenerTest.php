@@ -10,12 +10,12 @@ use App\Domain\Event\WithdrawFailed;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Listener\LogWithdrawFailedListener;
-use Hyperf\Contract\StdoutLoggerInterface;
 use HyperfTest\Support\UsesMockery;
 use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use stdClass;
 
 /**
@@ -25,13 +25,13 @@ class LogWithdrawFailedListenerTest extends TestCase
 {
     use UsesMockery;
 
-    private MockInterface|StdoutLoggerInterface $logger;
+    private LoggerInterface|MockInterface $logger;
 
     private LogWithdrawFailedListener $listener;
 
     protected function setUp(): void
     {
-        $this->logger = Mockery::mock(StdoutLoggerInterface::class);
+        $this->logger = Mockery::mock(LoggerInterface::class);
 
         $this->listener = new LogWithdrawFailedListener($this->logger);
     }

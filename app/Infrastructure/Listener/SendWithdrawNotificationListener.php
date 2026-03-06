@@ -6,9 +6,9 @@ namespace App\Infrastructure\Listener;
 
 use App\Domain\Event\WithdrawCompleted;
 use App\Infrastructure\Notification\WithdrawNotificationStrategyFactory;
-use Hyperf\Contract\StdoutLoggerInterface;
 use Hyperf\Event\Annotation\Listener;
 use Hyperf\Event\Contract\ListenerInterface;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 #[Listener]
@@ -16,7 +16,7 @@ class SendWithdrawNotificationListener implements ListenerInterface
 {
     public function __construct(
         private readonly WithdrawNotificationStrategyFactory $strategyFactory,
-        private readonly StdoutLoggerInterface $logger,
+        private readonly LoggerInterface $logger,
     ) {
     }
 

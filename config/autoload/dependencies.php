@@ -8,12 +8,14 @@ use App\Domain\Port\RateLimiterInterface;
 use App\Domain\Port\TransactionManagerInterface;
 use App\Domain\Port\WithdrawRepositoryInterface;
 use App\Infrastructure\Event\HyperfEventDispatcherAdapter;
+use App\Infrastructure\Log\LoggerFactory;
 use App\Infrastructure\Mail\SymfonyMailerService;
 use App\Infrastructure\Mail\SymfonyMailerServiceFactory;
 use App\Infrastructure\Persistence\DbTransactionManager;
 use App\Infrastructure\Persistence\Repository\EloquentAccountRepository;
 use App\Infrastructure\Persistence\Repository\EloquentWithdrawRepository;
 use App\Infrastructure\TokenBucketRateLimiter;
+use Psr\Log\LoggerInterface;
 
 return [
     AccountRepositoryInterface::class => EloquentAccountRepository::class,
@@ -22,4 +24,5 @@ return [
     TransactionManagerInterface::class => DbTransactionManager::class,
     RateLimiterInterface::class => TokenBucketRateLimiter::class,
     SymfonyMailerService::class => SymfonyMailerServiceFactory::class,
+    LoggerInterface::class => LoggerFactory::class,
 ];

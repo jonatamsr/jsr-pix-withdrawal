@@ -21,7 +21,6 @@ use App\Domain\Strategy\PixWithdrawData;
 use App\Domain\Strategy\WithdrawMethodData;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
-use Hyperf\Contract\StdoutLoggerInterface;
 use HyperfTest\Support\MocksLogger;
 use HyperfTest\Support\UsesMockery;
 use Mockery;
@@ -44,8 +43,6 @@ class CreateWithdrawUseCaseTest extends TestCase
     private EventDispatcherInterface|MockInterface $eventDispatcher;
 
     private MockInterface|TransactionManagerInterface $transactionManager;
-
-    private MockInterface|StdoutLoggerInterface $logger;
 
     private CreateWithdrawUseCase $useCase;
 

@@ -21,7 +21,7 @@ use App\Domain\Strategy\WithdrawMethodData;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
 use DateTimeImmutable;
-use Hyperf\Contract\StdoutLoggerInterface;
+use Psr\Log\LoggerInterface;
 
 class CreateWithdrawUseCase
 {
@@ -30,7 +30,7 @@ class CreateWithdrawUseCase
         private readonly WithdrawRepositoryInterface $withdrawRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly WithdrawMethodFactory $factory,
-        private readonly StdoutLoggerInterface $logger,
+        private readonly LoggerInterface $logger,
         private readonly TransactionManagerInterface $transactionManager,
     ) {
     }
