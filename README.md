@@ -367,54 +367,61 @@ Swoole transforms PHP into a persistent, event-driven runtime with coroutine sup
 ### Hexagonal Architecture
 
 ```mermaid
-graph TB
-    subgraph Driving Adapters
-        HTTP["HTTP Client"]
-        CRON["Crontab Scheduler"]
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e293b', 'primaryBorderColor': '#334155', 'lineColor': '#94a3b8', 'clusterBkg': '#0f172a', 'clusterBorder': '#334155'}}}%%
+flowchart TB
+    classDef adapter fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fee2e2,rx:6px
+    classDef port fill:#411f02,stroke:#f59e0b,stroke-width:2px,stroke-dasharray: 5 5,color:#fef3c7,rx:6px
+    classDef usecase fill:#172554,stroke:#3b82f6,stroke-width:2px,color:#dbeafe,rx:6px
+    classDef domain fill:#052e16,stroke:#22c55e,stroke-width:2px,color:#dcfce7,rx:8px
+    classDef infra fill:#0f172a,stroke:#64748b,stroke-width:2px,color:#f1f5f9,rx:6px
+
+    subgraph DrivingAdapters ["🔌 Driving Adapters"]
+        HTTP["fa:fa-globe HTTP Client"]:::adapter
+        CRON["fa:fa-clock Crontab Scheduler"]:::adapter
     end
 
-    subgraph Application Layer
-        UC_CREATE["CreateWithdrawUseCase"]
-        UC_PROCESS["ProcessScheduledWithdrawsUseCase"]
-        FACTORY["WithdrawMethodFactory"]
+    subgraph AppLayer ["⚙️ Application Layer"]
+        UC_CREATE["CreateWithdrawUseCase"]:::usecase
+        UC_PROCESS["ProcessScheduledWithdrawsUseCase"]:::usecase
+        FACTORY["WithdrawMethodFactory"]:::usecase
     end
 
-    subgraph Domain Core
-        ENT_ACC["Account Entity"]
-        ENT_WD["AccountWithdraw Entity"]
-        ENT_PIX["AccountWithdrawPix Entity"]
-        VO["Value Objects<br/>Money · Uuid · PixKey"]
-        EVENTS["Domain Events<br/>WithdrawCompleted · WithdrawFailed"]
-        STRAT["Strategies<br/>PixWithdrawStrategy"]
+    subgraph DomainCore ["💎 Domain Core"]
+        ENT_ACC["Account Entity"]:::domain
+        ENT_WD["AccountWithdraw Entity"]:::domain
+        ENT_PIX["AccountWithdrawPix Entity"]:::domain
+        VO["Value Objects<br/>(Money, Uuid, PixKey)"]:::domain
+        EVENTS["Domain Events<br/>(WithdrawCompleted, etc)"]:::domain
+        STRAT["Strategies<br/>(PixWithdrawStrategy)"]:::domain
     end
 
-    subgraph Ports
-        P_ACC["AccountRepositoryInterface"]
-        P_WD["WithdrawRepositoryInterface"]
-        P_EVT["EventDispatcherInterface"]
-        P_TX["TransactionManagerInterface"]
-        P_RL["RateLimiterInterface"]
+    subgraph PortsLayer ["🚪 Ports (Interfaces)"]
+        P_ACC["AccountRepositoryInterface"]:::port
+        P_WD["WithdrawRepositoryInterface"]:::port
+        P_EVT["EventDispatcherInterface"]:::port
+        P_TX["TransactionManagerInterface"]:::port
+        P_RL["RateLimiterInterface"]:::port
     end
 
-    subgraph Driven Adapters
-        REPO_ACC["EloquentAccountRepository"]
-        REPO_WD["EloquentWithdrawRepository"]
-        EVT_ADAPTER["HyperfEventDispatcherAdapter"]
-        TX_ADAPTER["DbTransactionManager"]
-        RL_ADAPTER["TokenBucketRateLimiter"]
-        MAILER["SymfonyMailerService"]
-        TRACER["OTelTracer → Jaeger"]
+    subgraph DrivenAdapters ["🔌 Driven Adapters"]
+        REPO_ACC["EloquentAccountRepository"]:::adapter
+        REPO_WD["EloquentWithdrawRepository"]:::adapter
+        EVT_ADAPTER["HyperfEventAdapter"]:::adapter
+        TX_ADAPTER["DbTransactionManager"]:::adapter
+        RL_ADAPTER["TokenBucketRateLimiter"]:::adapter
+        MAILER["SymfonyMailerService"]:::adapter
+        TRACER["OTelTracer Output"]:::adapter
     end
 
-    subgraph Infrastructure
-        MYSQL[("MySQL")]
-        REDIS[("Redis")]
-        MAILHOG["Mailhog SMTP"]
-        JAEGER["Jaeger Collector"]
+    subgraph Infra ["🏗️ Infrastructure"]
+        MYSQL[("fa:fa-database MySQL")]:::infra
+        REDIS[("fa:fa-server Redis")]:::infra
+        MAILHOG["fa:fa-envelope Mailhog"]:::infra
+        JAEGER["fa:fa-search Jaeger Collector"]:::infra
     end
 
-    HTTP -->|"POST /withdraw"| UC_CREATE
-    CRON -->|"every minute"| UC_PROCESS
+    DrivingAdapters -->|"POST /withdraw"| UC_CREATE
+    DrivingAdapters -->|"cron trigger"| UC_PROCESS
 
     UC_CREATE --> P_ACC & P_WD & P_EVT & P_TX
     UC_CREATE --> FACTORY --> STRAT
@@ -426,17 +433,17 @@ graph TB
     ENT_ACC --> VO
     P_EVT --> EVENTS
 
-    P_ACC -.->|implements| REPO_ACC
-    P_WD -.->|implements| REPO_WD
-    P_EVT -.->|implements| EVT_ADAPTER
-    P_TX -.->|implements| TX_ADAPTER
-    P_RL -.->|implements| RL_ADAPTER
+    P_ACC -.->|impl| REPO_ACC
+    P_WD -.->|impl| REPO_WD
+    P_EVT -.->|impl| EVT_ADAPTER
+    P_TX -.->|impl| TX_ADAPTER
+    P_RL -.->|impl| RL_ADAPTER
 
     REPO_ACC --> MYSQL
     REPO_WD --> MYSQL
     TX_ADAPTER --> MYSQL
     RL_ADAPTER --> REDIS
-    EVT_ADAPTER -->|WithdrawCompleted| MAILER --> MAILHOG
+    EVT_ADAPTER -->|"WithdrawCompleted"| MAILER --> MAILHOG
     TRACER --> JAEGER
 ```
 
@@ -445,19 +452,20 @@ graph TB
 ### Context Diagram (C4 Level 1)
 
 ```mermaid
-C4Context
-    title System Context — JSR PIX Withdrawal
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e293b', 'primaryBorderColor': '#334155', 'lineColor': '#94a3b8'}}}%%
+flowchart LR
+    classDef user fill:#082f49,stroke:#0ea5e9,stroke-width:2px,color:#e0f2fe,rx:8px
+    classDef system fill:#312e81,stroke:#6366f1,stroke-width:2px,color:#e0e7ff,rx:8px
+    classDef ext fill:#1e293b,stroke:#64748b,stroke-width:2px,color:#f8fafc,rx:8px,stroke-dasharray: 5 5
 
-    Person(user, "API Consumer", "System or developer that<br/>requests PIX withdrawals")
+    USER["👤 <b>API Consumer</b><br/><span style='font-size:12px;color:#94a3b8'>System or Developer</span>"]:::user
+    SYS["⚙️ <b>JSR PIX Withdrawal</b><br/><span style='font-size:12px;color:#94a3b8'>Saque PIX Microservice</span>"]:::system
+    MAIL["📧 <b>Email (Mailhog)</b><br/><span style='font-size:12px;color:#94a3b8'>Notification Target</span>"]:::ext
+    JAE["📊 <b>Jaeger</b><br/><span style='font-size:12px;color:#94a3b8'>Distributed Tracing OTLP</span>"]:::ext
 
-    System(pix, "JSR PIX Withdrawal", "Processes immediate and scheduled<br/>PIX withdrawal operations")
-
-    System_Ext(email, "Email (Mailhog)", "Receives withdrawal<br/>notification emails")
-    System_Ext(tracing, "Jaeger", "Collects distributed<br/>traces via OTLP")
-
-    Rel(user, pix, "POST /account/{id}/balance/withdraw", "JSON / HTTP")
-    Rel(pix, email, "Sends notification", "SMTP")
-    Rel(pix, tracing, "Exports traces", "OTLP/HTTP")
+    USER == "POST /withdraw<br/><span style='font-size:12px;color:#94a3b8'>(JSON / HTTP)</span>" ==> SYS
+    SYS -. "Sends Notification<br/><span style='font-size:12px;color:#94a3b8'>(SMTP)</span>" .-> MAIL
+    SYS -. "Exports Traces<br/><span style='font-size:12px;color:#94a3b8'>(OTLP/HTTP)</span>" .-> JAE
 ```
 
 ---
@@ -465,29 +473,39 @@ C4Context
 ### Container Diagram (C4 Level 2)
 
 ```mermaid
-C4Container
-    title Container Diagram — JSR PIX Withdrawal
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e293b', 'primaryBorderColor': '#334155', 'lineColor': '#94a3b8'}}}%%
+flowchart TB
+    classDef user fill:#082f49,stroke:#0ea5e9,stroke-width:2px,color:#e0f2fe,rx:8px
+    classDef app fill:#312e81,stroke:#6366f1,stroke-width:2px,color:#e0e7ff,rx:8px
+    classDef db fill:#052e16,stroke:#22c55e,stroke-width:2px,color:#dcfce7,rx:8px
+    classDef cache fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#fef3c7,rx:8px
+    classDef ext fill:#1e293b,stroke:#64748b,stroke-width:2px,color:#f8fafc,rx:8px,stroke-dasharray: 4 4
+    classDef boundary fill:none,stroke:#64748b,stroke-width:2px,stroke-dasharray: 4 4,rx:8px
 
-    Person(user, "API Consumer")
+    USER["👤 <b>API Consumer</b>"]:::user
 
-    Container_Boundary(system, "JSR PIX Withdrawal") {
-        Container(api, "Hyperf API", "PHP 8.4 / Swoole", "HTTP server on port 9501.<br/>Handles withdrawals, health checks")
-        Container(cron, "Crontab Worker", "Hyperf Crontab", "Runs every minute to process<br/>scheduled withdrawals")
-        ContainerDb(mysql, "MySQL 8.0", "Relational DB", "Stores accounts, withdrawals,<br/>and PIX method details")
-        ContainerDb(redis, "Redis 7", "In-memory store", "Idempotency cache, rate limiting<br/>token buckets")
-    }
+    subgraph SYSTEM ["📦 JSR PIX Withdrawal System"]
+        direction TB
+        API["⚙️ <b>Hyperf API Container</b><br/><span style='font-size:12px;color:#94a3b8'>PHP 8.4 + Swoole • Port 9501</span>"]:::app
+        CRON["⏱️ <b>Crontab Worker</b><br/><span style='font-size:12px;color:#94a3b8'>Hyperf Crontab scheduler</span>"]:::app
+        MYSQL[("fa:fa-database <b>MySQL 8.0</b><br/><span style='font-size:12px;color:#94a3b8'>Accounts, withdrawal data</span>")]:::db
+        REDIS[("fa:fa-server <b>Redis 7</b><br/><span style='font-size:12px;color:#94a3b8'>Idempotency & Rate Limit</span>")]:::cache
+    end
 
-    System_Ext(mailhog, "Mailhog", "SMTP + Web UI for email capture")
-    System_Ext(jaeger, "Jaeger", "OTLP trace collector + UI")
+    MAIL["📧 <b>Mailhog</b><br/><span style='font-size:12px;color:#94a3b8'>SMTP 1025 / UI 8025</span>"]:::ext
+    JAE["📊 <b>Jaeger</b><br/><span style='font-size:12px;color:#94a3b8'>OTLP 4318 / UI 16686</span>"]:::ext
 
-    Rel(user, api, "HTTP requests", "JSON")
-    Rel(api, mysql, "Reads/writes", "TCP 3306")
-    Rel(api, redis, "Gets/sets", "TCP 6379")
-    Rel(cron, mysql, "Reads/writes", "TCP 3306")
-    Rel(cron, redis, "Gets/sets", "TCP 6379")
-    Rel(api, mailhog, "Sends email", "SMTP 1025")
-    Rel(cron, mailhog, "Sends email", "SMTP 1025")
-    Rel(api, jaeger, "Exports traces", "OTLP/HTTP 4318")
+    USER == "JSON HTTPS" ==> API
+    API ==>|"TCP 3306"| MYSQL
+    API ==>|"TCP 6379"| REDIS
+    CRON -->|"TCP 3306"| MYSQL
+    CRON -->|"TCP 6379"| REDIS
+
+    API -.->|"SMTP 1025"| MAIL
+    CRON -.->|"SMTP 1025"| MAIL
+    API -.->|"OTLP/HTTP"| JAE
+
+    class SYSTEM boundary
 ```
 
 ---
@@ -495,58 +513,58 @@ C4Container
 ### Component Diagram (C4 Level 3)
 
 ```mermaid
-C4Component
-    title Component Diagram — Hyperf API Container
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e293b', 'primaryBorderColor': '#334155', 'lineColor': '#94a3b8'}}}%%
+flowchart TB
+    classDef mw fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fee2e2,rx:6px
+    classDef ctrl fill:#082f49,stroke:#0ea5e9,stroke-width:2px,color:#e0f2fe,rx:6px
+    classDef uc fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#e0e7ff,rx:6px
+    classDef infra fill:#0f172a,stroke:#64748b,stroke-width:2px,color:#f8fafc,rx:6px
+    classDef ext fill:#052e16,stroke:#22c55e,stroke-width:2px,color:#dcfce7,rx:6px,stroke-dasharray: 4 4
 
-    Container_Boundary(api, "Hyperf API") {
+    subgraph Middlewares ["🛡️ HTTP Middlewares"]
+        direction LR
+        MW_REQ["RequestId"]:::mw
+        MW_IDEM["Idempotency"]:::mw
+        MW_RATE["RateLimit"]:::mw
+    end
 
-        Component(ctrl, "AccountWithdrawController", "Controller", "Validates request, builds DTO,<br/>calls use case")
-        Component(health, "HealthController", "Controller", "MySQL + Redis connectivity check")
+    subgraph Controllers ["🌐 Rest Controllers"]
+        direction LR
+        CTRL["AccountWithdrawController"]:::ctrl
+        HEALTH["HealthController"]:::ctrl
+    end
 
-        Component(mw_idem, "IdempotencyMiddleware", "Middleware", "Caches responses by<br/>X-Idempotency-Key in Redis")
-        Component(mw_rate, "RateLimitMiddleware", "Middleware", "Token-bucket rate limit<br/>per account via Redis")
-        Component(mw_req, "RequestIdMiddleware", "Middleware", "Assigns X-Request-Id<br/>for correlation")
+    subgraph Application ["⚙️ Application Layer"]
+        UC_CREATE["CreateWithdrawUseCase"]:::uc
+        UC_PROC["ProcessScheduledWithdraws"]:::uc
+        FACT["WithdrawMethodFactory<br/>(PixWithdrawStrategy)"]:::uc
+    end
 
-        Component(uc_create, "CreateWithdrawUseCase", "Use Case", "Orchestrates immediate and<br/>scheduled withdrawal logic")
-        Component(uc_process, "ProcessScheduledWithdrawsUseCase", "Use Case", "Batch-processes pending<br/>scheduled withdrawals")
+    subgraph Infrastructure ["🏗️ Driven Adapters"]
+        REPO_ACC["AccountRepository"]:::infra
+        REPO_WD["WithdrawRepository"]:::infra
+        TX["DbTransactionManager"]:::infra
+        EVT["EventDispatcher"]:::infra
+        LISTENER["Listeners<br/>(Log, Notification)"]:::infra
+        MAILER["SymfonyMailerService"]:::infra
+    end
 
-        Component(factory, "WithdrawMethodFactory", "Factory", "Resolves withdrawal method<br/>to strategy class")
-        Component(strategy, "PixWithdrawStrategy", "Strategy", "Validates PIX data and<br/>builds PixWithdrawData")
+    MYSQL[("fa:fa-database MySQL")]:::ext
+    REDIS[("fa:fa-server Redis")]:::ext
+    MAILHOG["fa:fa-envelope Mailhog"]:::ext
 
-        Component(repo_acc, "EloquentAccountRepository", "Repository", "CRUD for Account entity<br/>with pessimistic locking")
-        Component(repo_wd, "EloquentWithdrawRepository", "Repository", "CRUD for AccountWithdraw and<br/>PIX details")
-        Component(tx, "DbTransactionManager", "Adapter", "Wraps Eloquent DB transactions")
-        Component(evt, "HyperfEventDispatcherAdapter", "Adapter", "Dispatches domain events<br/>to Hyperf listeners")
-        Component(rl, "TokenBucketRateLimiter", "Adapter", "Redis-backed token bucket")
+    Middlewares ==> Controllers
+    CTRL ==> UC_CREATE
+    CTRL -.-> FACT
+    UC_CREATE ==> REPO_ACC & REPO_WD & TX & EVT
+    UC_PROC ==> REPO_ACC & REPO_WD & TX & EVT
 
-        Component(listener_notif, "SendWithdrawNotificationListener", "Listener", "Sends email on<br/>WithdrawCompleted")
-        Component(listener_log, "LogWithdrawFailedListener", "Listener", "Logs details on<br/>WithdrawFailed")
-        Component(mailer, "SymfonyMailerService", "Mailer", "Renders HTML template<br/>and sends via SMTP")
-    }
+    EVT -.-> LISTENER
+    LISTENER -.-> MAILER
 
-    ContainerDb(mysql, "MySQL", "")
-    ContainerDb(redis, "Redis", "")
-    System_Ext(mailhog, "Mailhog", "")
-
-    Rel(ctrl, uc_create, "Calls")
-    Rel(ctrl, factory, "Resolves strategy")
-    Rel(uc_create, repo_acc, "findByIdWithLock / save")
-    Rel(uc_create, repo_wd, "save")
-    Rel(uc_create, tx, "execute()")
-    Rel(uc_create, evt, "dispatch(WithdrawCompleted)")
-    Rel(uc_process, repo_acc, "findByIdWithLock / save")
-    Rel(uc_process, repo_wd, "findPendingScheduled / save")
-    Rel(uc_process, tx, "execute()")
-    Rel(uc_process, evt, "dispatch events")
-    Rel(evt, listener_notif, "WithdrawCompleted")
-    Rel(evt, listener_log, "WithdrawFailed")
-    Rel(listener_notif, mailer, "sendWithdrawCompleted()")
-    Rel(mw_rate, rl, "attempt()")
-    Rel(repo_acc, mysql, "SQL")
-    Rel(repo_wd, mysql, "SQL")
-    Rel(rl, redis, "Token bucket")
-    Rel(mw_idem, redis, "GET/SET")
-    Rel(mailer, mailhog, "SMTP")
+    REPO_ACC & REPO_WD & TX -.-> MYSQL
+    MW_IDEM & MW_RATE -.-> REDIS
+    MAILER -.->|"SMTP"| MAILHOG
 ```
 
 ---
@@ -556,7 +574,9 @@ C4Component
 #### Immediate Withdrawal
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e1b4b', 'primaryTextColor': '#e0e7ff', 'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8', 'sequenceNumberColor': '#ffffff', 'actorBkg': '#082f49', 'actorBorder': '#0ea5e9', 'actorTextColor': '#e0f2fe', 'labelBoxBkgColor': '#1e293b', 'labelBoxBorderColor': '#475569'}}}%%
 sequenceDiagram
+    autonumber
     actor Client
     participant MW_ID as IdempotencyMiddleware
     participant MW_RL as RateLimitMiddleware
@@ -625,7 +645,9 @@ sequenceDiagram
 #### Scheduled Withdrawal (Creation)
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e1b4b', 'primaryTextColor': '#e0e7ff', 'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8', 'sequenceNumberColor': '#ffffff', 'actorBkg': '#082f49', 'actorBorder': '#0ea5e9', 'actorTextColor': '#e0f2fe', 'labelBoxBkgColor': '#1e293b', 'labelBoxBorderColor': '#475569'}}}%%
 sequenceDiagram
+    autonumber
     actor Client
     participant MW_ID as IdempotencyMiddleware
     participant MW_RL as RateLimitMiddleware
@@ -663,7 +685,9 @@ sequenceDiagram
 #### Crontab — Process Scheduled Withdrawals
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e1b4b', 'primaryTextColor': '#e0e7ff', 'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8', 'sequenceNumberColor': '#ffffff', 'actorBkg': '#082f49', 'actorBorder': '#0ea5e9', 'actorTextColor': '#e0f2fe', 'labelBoxBkgColor': '#1e293b', 'labelBoxBorderColor': '#475569'}}}%%
 sequenceDiagram
+    autonumber
     participant Cron as ProcessScheduledWithdrawsCrontab
     participant UC as ProcessScheduledWithdrawsUseCase
     participant WdRepo as WithdrawRepository
@@ -707,7 +731,9 @@ sequenceDiagram
 #### Idempotency Cache Hit
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e1b4b', 'primaryTextColor': '#e0e7ff', 'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8', 'sequenceNumberColor': '#ffffff', 'actorBkg': '#082f49', 'actorBorder': '#0ea5e9', 'actorTextColor': '#e0f2fe', 'labelBoxBkgColor': '#1e293b', 'labelBoxBorderColor': '#475569'}}}%%
 sequenceDiagram
+    autonumber
     actor Client
     participant MW_ID as IdempotencyMiddleware
     participant Redis
@@ -723,7 +749,9 @@ sequenceDiagram
 #### Rate Limit Exceeded
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e1b4b', 'primaryTextColor': '#e0e7ff', 'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8', 'sequenceNumberColor': '#ffffff', 'actorBkg': '#082f49', 'actorBorder': '#0ea5e9', 'actorTextColor': '#e0f2fe', 'labelBoxBkgColor': '#1e293b', 'labelBoxBorderColor': '#475569'}}}%%
 sequenceDiagram
+    autonumber
     actor Client
     participant MW_ID as IdempotencyMiddleware
     participant MW_RL as RateLimitMiddleware
@@ -750,6 +778,7 @@ sequenceDiagram
 ### Entity-Relationship Diagram
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#052e16', 'primaryBorderColor': '#22c55e', 'lineColor': '#94a3b8', 'tertiaryColor': '#0f172a'}}}%%
 erDiagram
     account {
         char(36) id PK "UUID v4"
@@ -761,7 +790,7 @@ erDiagram
 
     account_withdraw {
         char(36) id PK "UUID v4"
-        char(36) account_id FK "→ account.id"
+        char(36) account_id FK "-> account.id"
         varchar(20) method "e.g. pix"
         decimal(15_2) amount
         boolean scheduled "false = immediate"
@@ -774,7 +803,7 @@ erDiagram
     }
 
     account_withdraw_pix {
-        char(36) account_withdraw_id PK_FK "→ account_withdraw.id"
+        char(36) account_withdraw_id PK,FK "-> account_withdraw.id"
         varchar(20) type "e.g. email"
         varchar(255) key "PIX key value"
     }
