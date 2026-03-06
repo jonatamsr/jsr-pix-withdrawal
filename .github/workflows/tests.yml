@@ -23,6 +23,7 @@ jobs:
         with:
           php-version: '8.4'
           extensions: swoole, redis, pdo_mysql, grpc, protobuf
+          ini-values: grpc.enable_fork_support=1
           coverage: none
 
       - name: Cache Composer dependencies
@@ -51,6 +52,7 @@ jobs:
         with:
           php-version: '8.4'
           extensions: swoole, redis, pdo_mysql, grpc, protobuf
+          ini-values: grpc.enable_fork_support=1
           coverage: none
 
       - name: Cache Composer dependencies
