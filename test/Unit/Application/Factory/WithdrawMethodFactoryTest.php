@@ -36,7 +36,7 @@ class WithdrawMethodFactoryTest extends TestCase
     }
 
     #[Test]
-    public function normalizesMethodToUppercase(): void
+    public function normalizesMethodToLowercase(): void
     {
         $strategy = $this->factory->create('pix');
 
