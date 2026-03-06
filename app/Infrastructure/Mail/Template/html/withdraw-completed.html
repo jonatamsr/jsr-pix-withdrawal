@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>PIX Withdrawal Completed</title></head>
+<body style="font-family: Arial, sans-serif; padding: 20px;">
+    <h1 style="color: #2e7d32;">PIX Withdrawal Completed</h1>
+    <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Date/Time</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{{ dateTime }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Amount</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">R$ {{ amount }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">PIX Type</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{{ pixType }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">PIX Key</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{{ pixKey }}</td>
+        </tr>
+    </table>
+</body>
+</html>
