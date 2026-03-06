@@ -97,7 +97,12 @@ class CreateWithdrawUseCaseTest extends TestCase
 
         $this->eventDispatcher->shouldReceive('dispatch')
             ->once()
-            ->with(Mockery::type(WithdrawCompleted::class));
+            ->with(Mockery::on(function (WithdrawCompleted $event): bool {
+                $this->assertNotNull($event->methodData());
+                $this->assertInstanceOf(PixWithdrawData::class, $event->methodData());
+
+                return true;
+            }));
 
         $output = $this->useCase->execute(new CreateWithdrawInput(
             accountId: $accountId->value(),
@@ -143,7 +148,7 @@ class CreateWithdrawUseCaseTest extends TestCase
         ));
 
         $this->assertInstanceOf(PixWithdrawData::class, $savedMethodData);
-        /* @var PixWithdrawData $savedMethodData */
+        assert($savedMethodData instanceof PixWithdrawData);
         $this->assertSame('someone@email.com', $savedMethodData->getPixKey()->key());
     }
 

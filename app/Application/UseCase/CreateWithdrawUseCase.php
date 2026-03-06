@@ -91,7 +91,7 @@ class CreateWithdrawUseCase
 
         [$withdraw, $account] = $result;
 
-        $this->eventDispatcher->dispatch(new WithdrawCompleted($withdraw, $account));
+        $this->eventDispatcher->dispatch(new WithdrawCompleted($withdraw, $account, $methodData));
 
         return $this->buildOutput($withdraw);
     }

@@ -9,7 +9,9 @@ use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Enum\WithdrawMethod;
 use App\Domain\Event\DomainEvent;
 use App\Domain\Event\WithdrawCompleted;
+use App\Domain\Strategy\PixWithdrawData;
 use App\Domain\ValueObject\Money;
+use App\Domain\ValueObject\PixKey;
 use App\Domain\ValueObject\Uuid;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +47,23 @@ class WithdrawCompletedTest extends TestCase
         $event = $this->createEvent();
 
         $this->assertNotNull($event->occurredAt());
+    }
+
+    #[Test]
+    public function methodDataDefaultsToNull(): void
+    {
+        $event = new WithdrawCompleted($this->createWithdraw(), $this->createAccount());
+
+        $this->assertNull($event->methodData());
+    }
+
+    #[Test]
+    public function carriesMethodDataWhenProvided(): void
+    {
+        $methodData = new PixWithdrawData(PixKey::create('email', 'user@test.com'));
+        $event = new WithdrawCompleted($this->createWithdraw(), $this->createAccount(), $methodData);
+
+        $this->assertSame($methodData, $event->methodData());
     }
 
     private function createEvent(): WithdrawCompleted

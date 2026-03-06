@@ -15,7 +15,10 @@ use App\Domain\Port\AccountRepositoryInterface;
 use App\Domain\Port\EventDispatcherInterface;
 use App\Domain\Port\TransactionManagerInterface;
 use App\Domain\Port\WithdrawRepositoryInterface;
+use App\Domain\Strategy\PixWithdrawData;
 use App\Domain\ValueObject\Money;
+use App\Domain\ValueObject\PendingWithdrawal;
+use App\Domain\ValueObject\PixKey;
 use App\Domain\ValueObject\Uuid;
 use DateTimeImmutable;
 use HyperfTest\Support\MocksLogger;
@@ -87,6 +90,7 @@ class ProcessScheduledWithdrawsUseCaseTest extends TestCase
     {
         $accountId = Uuid::generate();
         $account = Account::create($accountId, 'Test User', Money::fromFloat(500.00));
+        $methodData = new PixWithdrawData(PixKey::create('email', 'user@example.com'));
 
         $withdraw = AccountWithdraw::createScheduled(
             Uuid::generate(),
@@ -98,7 +102,7 @@ class ProcessScheduledWithdrawsUseCaseTest extends TestCase
 
         $this->withdrawRepo->shouldReceive('findPendingScheduled')
             ->once()
-            ->andReturn([$withdraw]);
+            ->andReturn([new PendingWithdrawal($withdraw, $methodData)]);
 
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->once()
@@ -138,7 +142,7 @@ class ProcessScheduledWithdrawsUseCaseTest extends TestCase
 
         $this->withdrawRepo->shouldReceive('findPendingScheduled')
             ->once()
-            ->andReturn([$withdraw]);
+            ->andReturn([new PendingWithdrawal($withdraw)]);
 
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->once()
@@ -189,7 +193,7 @@ class ProcessScheduledWithdrawsUseCaseTest extends TestCase
 
         $this->withdrawRepo->shouldReceive('findPendingScheduled')
             ->once()
-            ->andReturn([$withdrawFail, $withdrawSuccess]);
+            ->andReturn([new PendingWithdrawal($withdrawFail), new PendingWithdrawal($withdrawSuccess)]);
 
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->with(Mockery::on(fn (Uuid $id) => $id->value() === $account1Id->value()))
@@ -251,7 +255,7 @@ class ProcessScheduledWithdrawsUseCaseTest extends TestCase
 
         $this->withdrawRepo->shouldReceive('findPendingScheduled')
             ->once()
-            ->andReturn([$withdraw1, $withdraw2]);
+            ->andReturn([new PendingWithdrawal($withdraw1), new PendingWithdrawal($withdraw2)]);
 
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->twice()
@@ -296,7 +300,7 @@ class ProcessScheduledWithdrawsUseCaseTest extends TestCase
 
         $this->withdrawRepo->shouldReceive('findPendingScheduled')
             ->once()
-            ->andReturn([$withdraw1, $withdraw2]);
+            ->andReturn([new PendingWithdrawal($withdraw1), new PendingWithdrawal($withdraw2)]);
 
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->with(Mockery::on(fn (Uuid $id) => $id->value() === $account1Id->value()))
