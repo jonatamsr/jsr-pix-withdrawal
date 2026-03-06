@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Model;
+namespace App\Infrastructure\Persistence\Model;
 
 use Hyperf\DbConnection\Model\Model as BaseModel;
 
