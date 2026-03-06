@@ -20,7 +20,7 @@ class CreateWithdrawRequest extends FormRequest
             'pix.type' => ['required', 'string', 'in:email'],
             'pix.key' => ['required', 'email'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'schedule' => ['nullable', 'date_format:Y-m-d H:i:s'],
+            'schedule' => ['nullable', 'date_format:Y-m-d H:i'],
         ];
     }
 }

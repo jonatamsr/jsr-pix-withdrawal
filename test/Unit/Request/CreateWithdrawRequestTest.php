@@ -66,7 +66,7 @@ class CreateWithdrawRequestTest extends TestCase
             'method' => 'pix',
             'pix' => ['type' => 'email', 'key' => 'user@example.com'],
             'amount' => 0.01,
-            'schedule' => '2026-03-10 14:30:00',
+            'schedule' => '2026-03-10 14:30',
         ]);
 
         $this->assertFalse($validator->fails());
