@@ -16,11 +16,12 @@ class EloquentAccountRepository implements AccountRepositoryInterface
     public function __construct(
         private readonly AccountModel $model,
         private readonly AccountMapper $mapper,
-    ) {}
+    ) {
+    }
 
     public function findById(Uuid $id): ?Account
     {
-        /** @var AccountModel|null $found */
+        /** @var null|AccountModel $found */
         $found = $this->model->newQuery()->find($id->value());
 
         if ($found === null) {
@@ -32,7 +33,7 @@ class EloquentAccountRepository implements AccountRepositoryInterface
 
     public function findByIdWithLock(Uuid $id): Account
     {
-        /** @var AccountModel|null $found */
+        /** @var null|AccountModel $found */
         $found = $this->model->newQuery()
             ->where('id', $id->value())
             ->lockForUpdate()

@@ -19,7 +19,8 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
         private readonly AccountWithdrawModel $withdrawModel,
         private readonly AccountWithdrawPixModel $pixModel,
         private readonly WithdrawMapper $mapper,
-    ) {}
+    ) {
+    }
 
     public function save(AccountWithdraw $withdraw, ?WithdrawMethodData $methodData = null): void
     {
@@ -56,6 +57,6 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
             ->where('scheduled_for', '<=', Carbon::now())
             ->get();
 
-        return $models->map(fn(AccountWithdrawModel $model) => $this->mapper->toDomain($model))->all();
+        return $models->map(fn (AccountWithdrawModel $model) => $this->mapper->toDomain($model))->all();
     }
 }
