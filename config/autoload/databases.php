@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 use function Hyperf\Support\env;
 
 return [
@@ -21,13 +22,6 @@ return [
             'wait_timeout' => 3.0,
             'heartbeat' => -1,
             'max_idle_time' => (float) env('DB_MAX_IDLE_TIME', 60),
-        ],
-        'commands' => [
-            'gen:model' => [
-                'path' => 'app/Model',
-                'force_casts' => true,
-                'inheritance' => 'Model',
-            ],
         ],
     ],
 ];
