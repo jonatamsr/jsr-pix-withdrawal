@@ -26,9 +26,9 @@ class HealthControllerTest extends TestCase
 
     private Db|MockInterface $db;
 
-    private Redis|MockInterface $redis;
+    private MockInterface|Redis $redis;
 
-    private ResponseInterface|MockInterface $response;
+    private MockInterface|ResponseInterface $response;
 
     private HealthController $controller;
 

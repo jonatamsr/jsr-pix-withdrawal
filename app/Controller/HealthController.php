@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use Hyperf\DbConnection\Db;
 use Hyperf\Redis\Redis;
+use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
 class HealthController extends AbstractController
@@ -16,7 +17,7 @@ class HealthController extends AbstractController
     ) {
     }
 
-    public function check(): \Psr\Http\Message\ResponseInterface
+    public function check(): ResponseInterface
     {
         $checks = [
             'mysql' => $this->checkMysql(),
