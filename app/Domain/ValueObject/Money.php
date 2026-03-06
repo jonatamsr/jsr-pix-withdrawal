@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\ValueObject;
 
+use App\Domain\Exception\InvalidAmountException;
 use InvalidArgumentException;
 
 final readonly class Money
@@ -20,11 +21,11 @@ final readonly class Money
     public static function fromFloat(float $value): self
     {
         if ($value < 0) {
-            throw new InvalidArgumentException('Money cannot be negative');
+            throw InvalidAmountException::negative();
         }
 
         if (round($value, 2) != $value) {
-            throw new InvalidArgumentException('Money must have at most 2 decimal places');
+            throw InvalidAmountException::tooManyDecimals();
         }
 
         return new self((int) round($value * 100));
@@ -33,7 +34,7 @@ final readonly class Money
     public static function fromString(string $value): self
     {
         if (! preg_match('/^\d+(\.\d{1,2})?$/', $value)) {
-            throw new InvalidArgumentException("Invalid money format: {$value}");
+            throw InvalidAmountException::invalidFormat($value);
         }
 
         $parts = explode('.', $value);

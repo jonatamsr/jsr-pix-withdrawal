@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace HyperfTest\Unit\Domain\ValueObject;
 
 use App\Domain\Enum\PixKeyType;
+use App\Domain\Exception\InvalidPixDataException;
 use App\Domain\ValueObject\PixKey;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -57,7 +57,7 @@ class PixKeyTest extends TestCase
     #[Test]
     public function createThrowsOnInvalidType(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidPixDataException::class);
         $this->expectExceptionMessage('Invalid PIX key type: phone');
 
         PixKey::create('phone', '+5511999999999');
@@ -66,7 +66,7 @@ class PixKeyTest extends TestCase
     #[Test]
     public function createThrowsOnEmptyType(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidPixDataException::class);
         $this->expectExceptionMessage('Invalid PIX key type');
 
         PixKey::create('', 'someone@email.com');
@@ -77,7 +77,7 @@ class PixKeyTest extends TestCase
     #[Test]
     public function createDelegatesToPixKeyTypeValidation(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidPixDataException::class);
 
         PixKey::create('email', 'not-an-email');
     }
@@ -85,7 +85,7 @@ class PixKeyTest extends TestCase
     #[Test]
     public function createThrowsOnWhitespaceOnlyKey(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidPixDataException::class);
         $this->expectExceptionMessage('PIX key cannot be empty');
 
         PixKey::create('email', '   ');

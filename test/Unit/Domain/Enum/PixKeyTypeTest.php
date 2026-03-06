@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace HyperfTest\Unit\Domain\Enum;
 
 use App\Domain\Enum\PixKeyType;
-use InvalidArgumentException;
+use App\Domain\Exception\InvalidPixDataException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -27,7 +27,7 @@ class PixKeyTypeTest extends TestCase
     #[Test]
     public function emailThrowsOnInvalidFormat(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidPixDataException::class);
         $this->expectExceptionMessage('Invalid email for PIX key');
 
         PixKeyType::EMAIL->validate('not-an-email');
@@ -36,7 +36,7 @@ class PixKeyTypeTest extends TestCase
     #[Test]
     public function emailThrowsOnEmptyKey(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidPixDataException::class);
         $this->expectExceptionMessage('PIX key cannot be empty');
 
         PixKeyType::EMAIL->validate('');
@@ -45,7 +45,7 @@ class PixKeyTypeTest extends TestCase
     #[Test]
     public function emailThrowsOnMissingDomain(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidPixDataException::class);
         $this->expectExceptionMessage('Invalid email for PIX key');
 
         PixKeyType::EMAIL->validate('someone@');
@@ -54,7 +54,7 @@ class PixKeyTypeTest extends TestCase
     #[Test]
     public function emailThrowsOnMissingLocalPart(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidPixDataException::class);
         $this->expectExceptionMessage('Invalid email for PIX key');
 
         PixKeyType::EMAIL->validate('@email.com');

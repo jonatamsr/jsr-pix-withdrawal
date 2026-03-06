@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\ValueObject;
 
-use InvalidArgumentException;
+use App\Domain\Exception\InvalidUuidException;
 use Ramsey\Uuid\Uuid as RamseyUuid;
 use Ramsey\Uuid\UuidInterface;
 
@@ -22,9 +22,7 @@ final readonly class Uuid
     public static function fromString(string $value): self
     {
         if (! RamseyUuid::isValid($value)) {
-            throw new InvalidArgumentException(
-                sprintf('Invalid UUID format: %s', $value)
-            );
+            throw new InvalidUuidException($value);
         }
 
         return new self(RamseyUuid::fromString($value));

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HyperfTest\Unit\Domain\ValueObject;
 
+use App\Domain\Exception\InvalidAmountException;
 use App\Domain\ValueObject\Money;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
@@ -51,7 +52,7 @@ class MoneyTest extends TestCase
     #[Test]
     public function fromFloatThrowsOnNegativeValue(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidAmountException::class);
         $this->expectExceptionMessage('negative');
 
         Money::fromFloat(-10.00);
@@ -60,7 +61,7 @@ class MoneyTest extends TestCase
     #[Test]
     public function fromFloatThrowsOnMoreThanTwoDecimals(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidAmountException::class);
         $this->expectExceptionMessage('2 decimal places');
 
         Money::fromFloat(10.123);
@@ -103,7 +104,7 @@ class MoneyTest extends TestCase
     #[Test]
     public function fromStringThrowsOnNonNumeric(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidAmountException::class);
         $this->expectExceptionMessage('Invalid money format');
 
         Money::fromString('abc');
@@ -112,7 +113,7 @@ class MoneyTest extends TestCase
     #[Test]
     public function fromStringThrowsOnEmptyString(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidAmountException::class);
         $this->expectExceptionMessage('Invalid money format');
 
         Money::fromString('');
@@ -121,7 +122,7 @@ class MoneyTest extends TestCase
     #[Test]
     public function fromStringThrowsOnNegative(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidAmountException::class);
         $this->expectExceptionMessage('Invalid money format');
 
         Money::fromString('-5.00');
@@ -130,7 +131,7 @@ class MoneyTest extends TestCase
     #[Test]
     public function fromStringThrowsOnMoreThanTwoDecimals(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidAmountException::class);
         $this->expectExceptionMessage('Invalid money format');
 
         Money::fromString('10.123');
