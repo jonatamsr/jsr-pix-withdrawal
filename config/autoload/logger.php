@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Infrastructure\Observability\TraceContextProcessor;
 use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
+use Monolog\Level;
 
 /*
  * This file is part of Hyperf.
@@ -21,8 +21,8 @@ return [
         'handler' => [
             'class' => StreamHandler::class,
             'constructor' => [
-                'stream' => BASE_PATH . '/runtime/logs/hyperf.log',
-                'level' => Logger::DEBUG,
+                'stream' => 'php://stdout',
+                'level' => Level::Debug,
             ],
         ],
         'formatter' => [
