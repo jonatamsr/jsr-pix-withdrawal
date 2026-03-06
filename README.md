@@ -56,7 +56,7 @@ The service follows **Hexagonal Architecture** (Ports & Adapters), cleanly separ
 ### 1. Clone & start the containers
 
 ```bash
-git clone <repository-url> && cd jsr-pix-withdrawal
+git clone https://github.com/jonatamsr/jsr-pix-withdrawal && cd jsr-pix-withdrawal
 docker compose up -d
 ```
 
