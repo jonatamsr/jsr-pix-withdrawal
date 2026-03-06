@@ -6,6 +6,12 @@ namespace App\Infrastructure\Persistence\Model;
 
 use Hyperf\Database\Model\Relations\BelongsTo;
 
+/**
+ * @property string $account_withdraw_id
+ * @property string $type
+ * @property string $key
+ * @property AccountWithdrawModel $withdraw
+ */
 class AccountWithdrawPixModel extends Model
 {
     public bool $incrementing = false;

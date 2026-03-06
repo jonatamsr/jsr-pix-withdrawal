@@ -4,6 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Model;
 
+use Carbon\Carbon;
+
+/**
+ * @property string $id
+ * @property string $name
+ * @property string $balance
+ * @property null|Carbon $created_at
+ * @property null|Carbon $updated_at
+ */
 class AccountModel extends Model
 {
     public bool $incrementing = false;
