@@ -117,7 +117,7 @@ class AccountWithdrawControllerTest extends TestCase
             'method' => 'pix',
             'pix' => ['type' => 'email', 'key' => 'user@example.com'],
             'amount' => 200.00,
-            'schedule' => '2026-03-10 14:30:00',
+            'schedule' => '2026-03-10 14:30',
         ]);
 
         $output = new CreateWithdrawOutput(
@@ -134,7 +134,7 @@ class AccountWithdrawControllerTest extends TestCase
         $this->useCase->shouldReceive('execute')
             ->once()
             ->with(Mockery::on(function (CreateWithdrawInput $input): bool {
-                return $input->schedule === '2026-03-10 14:30:00';
+                return $input->schedule === '2026-03-10 14:30';
             }))
             ->andReturn($output);
 
