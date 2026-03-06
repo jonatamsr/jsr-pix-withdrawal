@@ -12,7 +12,8 @@ class HyperfEventDispatcherAdapter implements EventDispatcherInterface
 {
     public function __construct(
         private readonly PsrEventDispatcherInterface $dispatcher,
-    ) {}
+    ) {
+    }
 
     public function dispatch(DomainEvent $event): void
     {
