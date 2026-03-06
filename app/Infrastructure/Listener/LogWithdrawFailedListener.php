@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\Infrastructure\Listener;
 
 use App\Domain\Event\WithdrawFailed;
-use Hyperf\Contract\StdoutLoggerInterface;
 use Hyperf\Event\Annotation\Listener;
 use Hyperf\Event\Contract\ListenerInterface;
+use Psr\Log\LoggerInterface;
 
 #[Listener]
 class LogWithdrawFailedListener implements ListenerInterface
 {
     public function __construct(
-        private readonly StdoutLoggerInterface $logger,
+        private readonly LoggerInterface $logger,
     ) {
     }
 

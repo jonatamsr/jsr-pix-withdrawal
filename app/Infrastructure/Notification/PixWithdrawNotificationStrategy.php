@@ -9,13 +9,13 @@ use App\Domain\Entity\AccountWithdrawPix;
 use App\Domain\Strategy\PixWithdrawData;
 use App\Domain\Strategy\WithdrawMethodData;
 use App\Infrastructure\Mail\SymfonyMailerService;
-use Hyperf\Contract\StdoutLoggerInterface;
+use Psr\Log\LoggerInterface;
 
 class PixWithdrawNotificationStrategy implements WithdrawNotificationStrategyInterface
 {
     public function __construct(
         private readonly SymfonyMailerService $mailerService,
-        private readonly StdoutLoggerInterface $logger,
+        private readonly LoggerInterface $logger,
     ) {
     }
 

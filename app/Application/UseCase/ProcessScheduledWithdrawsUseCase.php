@@ -13,7 +13,7 @@ use App\Domain\Port\EventDispatcherInterface;
 use App\Domain\Port\TransactionManagerInterface;
 use App\Domain\Port\WithdrawRepositoryInterface;
 use App\Domain\Strategy\WithdrawMethodData;
-use Hyperf\Contract\StdoutLoggerInterface;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 class ProcessScheduledWithdrawsUseCase
@@ -22,7 +22,7 @@ class ProcessScheduledWithdrawsUseCase
         private readonly AccountRepositoryInterface $accountRepository,
         private readonly WithdrawRepositoryInterface $withdrawRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly StdoutLoggerInterface $logger,
+        private readonly LoggerInterface $logger,
         private readonly TransactionManagerInterface $transactionManager,
     ) {
     }

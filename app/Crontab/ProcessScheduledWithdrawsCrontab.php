@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Crontab;
 
 use App\Application\UseCase\ProcessScheduledWithdrawsUseCase;
-use Hyperf\Contract\StdoutLoggerInterface;
 use Hyperf\Crontab\Annotation\Crontab;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 #[Crontab(
@@ -19,7 +19,7 @@ class ProcessScheduledWithdrawsCrontab
 {
     public function __construct(
         private readonly ProcessScheduledWithdrawsUseCase $useCase,
-        private readonly StdoutLoggerInterface $logger,
+        private readonly LoggerInterface $logger,
     ) {
     }
 

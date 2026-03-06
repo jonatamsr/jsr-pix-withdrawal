@@ -7,7 +7,6 @@ namespace HyperfTest\Unit\Exception\Handler;
 use App\Exception\Handler\AppExceptionHandler;
 use Hyperf\Contract\StdoutLoggerInterface;
 use Hyperf\HttpMessage\Base\Response;
-use HyperfTest\Support\MocksLogger;
 use HyperfTest\Support\UsesMockery;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,13 +19,13 @@ use RuntimeException;
 class AppExceptionHandlerTest extends TestCase
 {
     use UsesMockery;
-    use MocksLogger;
 
     private AppExceptionHandler $handler;
 
     protected function setUp(): void
     {
-        $this->handler = new AppExceptionHandler($this->silentLogger());
+        $logger = Mockery::mock(StdoutLoggerInterface::class)->shouldIgnoreMissing();
+        $this->handler = new AppExceptionHandler($logger);
     }
 
     // -- isValid --
