@@ -56,6 +56,11 @@ class AccountWithdrawModel extends Model
         return $this->belongsTo(AccountModel::class, 'account_id', 'id');
     }
 
+    public function withdrawMethodRelation(): ?Model
+    {
+        return $this->getRelationValue($this->method);
+    }
+
     public function pix(): HasOne
     {
         return $this->hasOne(AccountWithdrawPixModel::class, 'account_withdraw_id', 'id');

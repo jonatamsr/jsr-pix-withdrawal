@@ -8,6 +8,7 @@ use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Enum\WithdrawMethod;
 use App\Domain\Strategy\PixWithdrawData;
 use App\Domain\ValueObject\Money;
+use App\Domain\ValueObject\PendingWithdrawal;
 use App\Domain\ValueObject\PixKey;
 use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Mapper\WithdrawMapper;
@@ -140,6 +141,7 @@ class EloquentWithdrawRepositoryTest extends TestCase
         $model1->error = false;
         $model1->error_reason = null;
         $model1->created_at = '2026-02-28 10:00:00';
+        $model1->setRelation('pix', null);
 
         $model2 = new AccountWithdrawModel();
         $model2->id = '550e8400-e29b-41d4-a716-446655440011';
@@ -152,6 +154,7 @@ class EloquentWithdrawRepositoryTest extends TestCase
         $model2->error = false;
         $model2->error_reason = null;
         $model2->created_at = '2026-02-28 12:00:00';
+        $model2->setRelation('pix', null);
 
         $collection = new Collection([$model1, $model2]);
 
@@ -179,12 +182,13 @@ class EloquentWithdrawRepositoryTest extends TestCase
         $results = $this->repository->findPendingScheduled();
 
         $this->assertCount(2, $results);
-        $this->assertContainsOnlyInstancesOf(AccountWithdraw::class, $results);
-        $this->assertSame('550e8400-e29b-41d4-a716-446655440010', $results[0]->id()->value());
-        $this->assertSame('550e8400-e29b-41d4-a716-446655440011', $results[1]->id()->value());
-        $this->assertTrue($results[0]->isScheduled());
-        $this->assertFalse($results[0]->isDone());
-        $this->assertFalse($results[0]->hasError());
+        $this->assertContainsOnlyInstancesOf(PendingWithdrawal::class, $results);
+        $this->assertSame('550e8400-e29b-41d4-a716-446655440010', $results[0]->withdraw()->id()->value());
+        $this->assertSame('550e8400-e29b-41d4-a716-446655440011', $results[1]->withdraw()->id()->value());
+        $this->assertTrue($results[0]->withdraw()->isScheduled());
+        $this->assertFalse($results[0]->withdraw()->isDone());
+        $this->assertFalse($results[0]->withdraw()->hasError());
+        $this->assertNull($results[0]->methodData());
     }
 
     #[Test]
@@ -217,5 +221,62 @@ class EloquentWithdrawRepositoryTest extends TestCase
 
         $this->assertCount(0, $results);
         $this->assertSame([], $results);
+    }
+
+    #[Test]
+    public function findPendingScheduledIncludesPixMethodDataWhenRelationExists(): void
+    {
+        $pixModel = new AccountWithdrawPixModel();
+        $pixModel->account_withdraw_id = '550e8400-e29b-41d4-a716-446655440010';
+        $pixModel->type = 'email';
+        $pixModel->key = 'user@example.com';
+
+        $model = new AccountWithdrawModel();
+        $model->id = '550e8400-e29b-41d4-a716-446655440010';
+        $model->account_id = '550e8400-e29b-41d4-a716-446655440000';
+        $model->method = 'pix';
+        $model->amount = '100.00';
+        $model->scheduled = true;
+        $model->scheduled_for = '2026-03-01 10:00:00';
+        $model->done = false;
+        $model->error = false;
+        $model->error_reason = null;
+        $model->created_at = '2026-02-28 10:00:00';
+        $model->setRelation('pix', $pixModel);
+
+        $collection = new Collection([$model]);
+
+        $this->withdrawModel->shouldReceive('newQuery')->once()->andReturn($this->withdrawQueryBuilder);
+        $this->withdrawQueryBuilder->shouldReceive('where')
+            ->with('scheduled', true)
+            ->once()
+            ->andReturn($this->withdrawQueryBuilder);
+        $this->withdrawQueryBuilder->shouldReceive('where')
+            ->with('done', false)
+            ->once()
+            ->andReturn($this->withdrawQueryBuilder);
+        $this->withdrawQueryBuilder->shouldReceive('where')
+            ->with('error', false)
+            ->once()
+            ->andReturn($this->withdrawQueryBuilder);
+        $this->withdrawQueryBuilder->shouldReceive('where')
+            ->with('scheduled_for', '<=', Mockery::type(Carbon::class))
+            ->once()
+            ->andReturn($this->withdrawQueryBuilder);
+        $this->withdrawQueryBuilder->shouldReceive('get')
+            ->once()
+            ->andReturn($collection);
+
+        $results = $this->repository->findPendingScheduled();
+
+        $this->assertCount(1, $results);
+        $this->assertInstanceOf(PendingWithdrawal::class, $results[0]);
+
+        $methodData = $results[0]->methodData();
+        $this->assertInstanceOf(PixWithdrawData::class, $methodData);
+
+        assert($methodData instanceof PixWithdrawData);
+        $this->assertSame('user@example.com', $methodData->getPixKey()->key());
+        $this->assertSame('email', $methodData->getPixKey()->type()->value);
     }
 }

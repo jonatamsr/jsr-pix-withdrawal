@@ -2,23 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Event;
+namespace App\Domain\ValueObject;
 
-use App\Domain\Entity\Account;
 use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Strategy\WithdrawMethodData;
-use DateTimeImmutable;
 
-final readonly class WithdrawCompleted implements DomainEvent
+final readonly class PendingWithdrawal
 {
-    private DateTimeImmutable $occurredAt;
-
     public function __construct(
         private AccountWithdraw $withdraw,
-        private Account $account,
         private ?WithdrawMethodData $methodData = null,
     ) {
-        $this->occurredAt = new DateTimeImmutable();
     }
 
     public function withdraw(): AccountWithdraw
@@ -26,18 +20,8 @@ final readonly class WithdrawCompleted implements DomainEvent
         return $this->withdraw;
     }
 
-    public function account(): Account
-    {
-        return $this->account;
-    }
-
     public function methodData(): ?WithdrawMethodData
     {
         return $this->methodData;
-    }
-
-    public function occurredAt(): DateTimeImmutable
-    {
-        return $this->occurredAt;
     }
 }

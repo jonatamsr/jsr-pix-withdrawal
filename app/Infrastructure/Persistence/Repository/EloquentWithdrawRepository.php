@@ -8,6 +8,8 @@ use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Port\WithdrawRepositoryInterface;
 use App\Domain\Strategy\PixWithdrawData;
 use App\Domain\Strategy\WithdrawMethodData;
+use App\Domain\ValueObject\PendingWithdrawal;
+use App\Domain\ValueObject\PixKey;
 use App\Infrastructure\Persistence\Mapper\WithdrawMapper;
 use App\Infrastructure\Persistence\Model\AccountWithdrawModel;
 use App\Infrastructure\Persistence\Model\AccountWithdrawPixModel;
@@ -46,7 +48,7 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
     }
 
     /**
-     * @return AccountWithdraw[]
+     * @return PendingWithdrawal[]
      */
     public function findPendingScheduled(): array
     {
@@ -57,6 +59,23 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
             ->where('scheduled_for', '<=', Carbon::now())
             ->get();
 
-        return $models->map(fn (AccountWithdrawModel $model) => $this->mapper->toDomain($model))->all();
+        $models->loadMissing($models->pluck('method')->unique()->all());
+
+        return $models->map(fn (AccountWithdrawModel $model) => new PendingWithdrawal(
+            $this->mapper->toDomain($model),
+            $this->resolveMethodData($model),
+        ))->all();
+    }
+
+    private function resolveMethodData(AccountWithdrawModel $model): ?WithdrawMethodData
+    {
+        $detail = $model->withdrawMethodRelation();
+
+        return match (true) {
+            $detail instanceof AccountWithdrawPixModel => new PixWithdrawData(
+                PixKey::create($detail->type, $detail->key),
+            ),
+            default => null,
+        };
     }
 }

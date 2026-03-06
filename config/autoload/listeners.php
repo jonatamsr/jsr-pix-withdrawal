@@ -1,6 +1,9 @@
 <?php
 
 declare(strict_types=1);
+
+use App\Infrastructure\Listener\LogWithdrawFailedListener;
+use App\Infrastructure\Listener\SendWithdrawNotificationListener;
 use Hyperf\ExceptionHandler\Listener\ErrorExceptionHandler;
 
 /*
@@ -11,6 +14,9 @@ use Hyperf\ExceptionHandler\Listener\ErrorExceptionHandler;
  * @contact  group@hyperf.io
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
+
 return [
     ErrorExceptionHandler::class,
+    SendWithdrawNotificationListener::class,
+    LogWithdrawFailedListener::class,
 ];

@@ -12,6 +12,7 @@ use App\Domain\Port\AccountRepositoryInterface;
 use App\Domain\Port\EventDispatcherInterface;
 use App\Domain\Port\TransactionManagerInterface;
 use App\Domain\Port\WithdrawRepositoryInterface;
+use App\Domain\Strategy\WithdrawMethodData;
 use Hyperf\Contract\StdoutLoggerInterface;
 use Throwable;
 
@@ -38,8 +39,8 @@ class ProcessScheduledWithdrawsUseCase
             'total_found' => $total,
         ]);
 
-        foreach ($pendingWithdrawals as $withdraw) {
-            $this->processWithdrawal($withdraw) ? ++$processed : ++$failed;
+        foreach ($pendingWithdrawals as $pending) {
+            $this->processWithdrawal($pending->withdraw(), $pending->methodData()) ? ++$processed : ++$failed;
         }
 
         $this->logger->info('Scheduled withdrawals batch completed', [
@@ -49,7 +50,7 @@ class ProcessScheduledWithdrawsUseCase
         ]);
     }
 
-    private function processWithdrawal(AccountWithdraw $withdraw): bool
+    private function processWithdrawal(AccountWithdraw $withdraw, ?WithdrawMethodData $methodData): bool
     {
         try {
             $account = $this->transactionManager->execute(function () use ($withdraw) {
@@ -65,7 +66,7 @@ class ProcessScheduledWithdrawsUseCase
                 return $account;
             });
 
-            $this->eventDispatcher->dispatch(new WithdrawCompleted($withdraw, $account));
+            $this->eventDispatcher->dispatch(new WithdrawCompleted($withdraw, $account, $methodData));
 
             $this->logger->info('Scheduled withdrawal processed successfully', [
                 'withdraw_id' => $withdraw->id()->value(),
