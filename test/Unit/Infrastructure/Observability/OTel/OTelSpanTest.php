@@ -23,7 +23,7 @@ class OTelSpanTest extends TestCase
 {
     use UsesMockery;
 
-    private OTelSpanInterface|MockInterface $otelSpan;
+    private MockInterface|OTelSpanInterface $otelSpan;
 
     private OTelSpan $span;
 
@@ -51,7 +51,7 @@ class OTelSpanTest extends TestCase
         $context = $this->span->getContext();
 
         $this->assertInstanceOf(OTelSpanContext::class, $context);
-        /** @var OTelSpanContext $context */
+        /* @var OTelSpanContext $context */
         $this->assertSame('trace-abc', $context->getTraceId());
         $this->assertSame('span-def', $context->getSpanId());
     }
@@ -75,7 +75,7 @@ class OTelSpanTest extends TestCase
     {
         $this->otelSpan->shouldReceive('end')
             ->once()
-            ->with(Mockery::on(fn(int $nanos) => $nanos > 0));
+            ->with(Mockery::on(fn (int $nanos) => $nanos > 0));
 
         $this->span->finish(1609459200.5);
     }
@@ -85,7 +85,7 @@ class OTelSpanTest extends TestCase
     {
         $this->otelSpan->shouldReceive('end')
             ->once()
-            ->with(Mockery::on(fn(int $nanos) => $nanos === 1_000_000_000));
+            ->with(Mockery::on(fn (int $nanos) => $nanos === 1_000_000_000));
 
         $this->span->finish(1);
     }
@@ -97,7 +97,7 @@ class OTelSpanTest extends TestCase
 
         $this->otelSpan->shouldReceive('end')
             ->once()
-            ->with(Mockery::on(fn(int $nanos) => $nanos > 0));
+            ->with(Mockery::on(fn (int $nanos) => $nanos > 0));
 
         $this->span->finish($dt);
     }

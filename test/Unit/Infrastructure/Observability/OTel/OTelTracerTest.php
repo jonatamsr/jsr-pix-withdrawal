@@ -27,9 +27,9 @@ class OTelTracerTest extends TestCase
 {
     use UsesMockery;
 
-    private TracerProviderInterface|MockInterface $provider;
+    private MockInterface|TracerProviderInterface $provider;
 
-    private OTelTracerInterface|MockInterface $otelTracer;
+    private MockInterface|OTelTracerInterface $otelTracer;
 
     private OTelTracer $tracer;
 
@@ -154,7 +154,7 @@ class OTelTracerTest extends TestCase
         $context = $this->tracer->extract(TEXT_MAP, $carrier);
 
         $this->assertInstanceOf(OTelSpanContext::class, $context);
-        /** @var OTelSpanContext $context */
+        /* @var OTelSpanContext $context */
         $this->assertSame('abcdef1234567890', $context->getTraceId());
         $this->assertSame('1234abcd5678', $context->getSpanId());
     }

@@ -55,7 +55,7 @@ class OTelSpanContextTest extends TestCase
         $original = new OTelSpanContext('trace-1', 'span-2');
         $modified = $original->withBaggageItem('key', 'value');
 
-        /** @var OTelSpanContext $modified */
+        /* @var OTelSpanContext $modified */
         $this->assertSame('trace-1', $modified->getTraceId());
         $this->assertSame('span-2', $modified->getSpanId());
     }
