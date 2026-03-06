@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\EventDispatcher;
+namespace App\Infrastructure\Event;
 
 use App\Domain\Event\DomainEvent;
 use App\Domain\Port\EventDispatcherInterface;
