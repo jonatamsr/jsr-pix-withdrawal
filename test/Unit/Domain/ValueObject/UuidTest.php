@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace HyperfTest\Unit\Domain\ValueObject;
 
+use App\Domain\Exception\InvalidUuidException;
 use App\Domain\ValueObject\Uuid;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -37,7 +37,7 @@ class UuidTest extends TestCase
     #[Test]
     public function fromStringThrowsOnInvalidFormat(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidUuidException::class);
         $this->expectExceptionMessage('Invalid UUID format');
 
         Uuid::fromString('not-a-uuid');
@@ -46,7 +46,7 @@ class UuidTest extends TestCase
     #[Test]
     public function fromStringThrowsOnEmptyString(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidUuidException::class);
 
         Uuid::fromString('');
     }

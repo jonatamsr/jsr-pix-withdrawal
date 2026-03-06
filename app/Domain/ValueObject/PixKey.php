@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\ValueObject;
 
 use App\Domain\Enum\PixKeyType;
-use InvalidArgumentException;
+use App\Domain\Exception\InvalidPixDataException;
 
 final readonly class PixKey
 {
@@ -20,7 +20,7 @@ final readonly class PixKey
         $normalizedType = strtolower($type);
 
         $pixKeyType = PixKeyType::tryFrom($normalizedType)
-            ?? throw new InvalidArgumentException("Invalid PIX key type: {$type}");
+            ?? throw InvalidPixDataException::invalidType($type);
 
         $key = trim($key);
 

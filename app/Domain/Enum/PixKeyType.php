@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Enum;
 
-use InvalidArgumentException;
+use App\Domain\Exception\InvalidPixDataException;
 
 enum PixKeyType: string
 {
@@ -13,7 +13,7 @@ enum PixKeyType: string
     public function validate(string $key): void
     {
         if ($key === '') {
-            throw new InvalidArgumentException('PIX key cannot be empty');
+            throw InvalidPixDataException::emptyKey();
         }
 
         match ($this) {
@@ -24,7 +24,7 @@ enum PixKeyType: string
     private static function validateEmail(string $key): void
     {
         if (filter_var($key, FILTER_VALIDATE_EMAIL) === false) {
-            throw new InvalidArgumentException("Invalid email for PIX key: {$key}");
+            throw InvalidPixDataException::invalidEmail($key);
         }
     }
 }
