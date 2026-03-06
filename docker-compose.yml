@@ -5,8 +5,8 @@ services:
     build:
       dockerfile: dev.Dockerfile
       args:
-        UID: 1000
-        GID: 1000
+        UID: ${APP_UID:-1000}
+        GID: ${APP_GID:-1000}
     volumes:
       - ./:/opt/www
     ports:
