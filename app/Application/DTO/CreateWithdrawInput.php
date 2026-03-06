@@ -15,5 +15,6 @@ final readonly class CreateWithdrawInput
         public array $methodData,
         public float $amount,
         public ?string $schedule = null,
-    ) {}
+    ) {
+    }
 }
