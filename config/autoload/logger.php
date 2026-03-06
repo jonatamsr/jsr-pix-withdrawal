@@ -1,7 +1,9 @@
 <?php
 
 declare(strict_types=1);
-use Monolog\Formatter\LineFormatter;
+
+use App\Infrastructure\Observability\TraceContextProcessor;
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
@@ -13,6 +15,7 @@ use Monolog\Logger;
  * @contact  group@hyperf.io
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
+
 return [
     'default' => [
         'handler' => [
@@ -23,11 +26,12 @@ return [
             ],
         ],
         'formatter' => [
-            'class' => LineFormatter::class,
-            'constructor' => [
-                'format' => null,
-                'dateFormat' => 'Y-m-d H:i:s',
-                'allowInlineLineBreaks' => true,
+            'class' => JsonFormatter::class,
+            'constructor' => [],
+        ],
+        'processors' => [
+            [
+                'class' => TraceContextProcessor::class,
             ],
         ],
     ],
