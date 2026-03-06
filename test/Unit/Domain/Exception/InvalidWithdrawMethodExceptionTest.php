@@ -39,10 +39,10 @@ class InvalidWithdrawMethodExceptionTest extends TestCase
     }
 
     #[Test]
-    public function hasDefaultHttpStatusCode(): void
+    public function hasHttpStatusCode400(): void
     {
         $exception = new InvalidWithdrawMethodException('TED');
 
-        $this->assertSame(422, $exception->getHttpStatusCode());
+        $this->assertSame(400, $exception->getHttpStatusCode());
     }
 }
