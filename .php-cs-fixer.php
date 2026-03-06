@@ -86,4 +86,4 @@ return (new PhpCsFixer\Config())
             ->exclude('vendor')
             ->in(__DIR__)
     )
-    ->setUsingCache(false);
+    ->setUsingCache(true);
