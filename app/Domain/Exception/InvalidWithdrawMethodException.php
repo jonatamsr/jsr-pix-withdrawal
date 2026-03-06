@@ -15,4 +15,9 @@ class InvalidWithdrawMethodException extends BusinessException
     {
         return 'INVALID_WITHDRAW_METHOD';
     }
+
+    public function getHttpStatusCode(): int
+    {
+        return 400;
+    }
 }
