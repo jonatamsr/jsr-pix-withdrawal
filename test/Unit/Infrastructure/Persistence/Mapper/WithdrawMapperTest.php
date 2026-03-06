@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace HyperfTest\Unit\Infrastructure\Persistence\Mapper;
 
+use App\Domain\Entity\AccountWithdraw;
+use App\Domain\Entity\AccountWithdrawPix;
 use App\Domain\Enum\WithdrawMethod;
+use App\Domain\ValueObject\Money;
+use App\Domain\ValueObject\PixKey;
+use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Mapper\WithdrawMapper;
 use App\Infrastructure\Persistence\Model\AccountWithdrawModel;
 use App\Infrastructure\Persistence\Model\AccountWithdrawPixModel;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -114,5 +120,69 @@ class WithdrawMapperTest extends TestCase
         $this->assertSame('550e8400-e29b-41d4-a716-446655440001', $pix->accountWithdrawId()->value());
         $this->assertSame('email', $pix->pixKey()->type()->value);
         $this->assertSame('fulano@email.com', $pix->pixKey()->key());
+    }
+
+    // -- toModel --
+
+    #[Test]
+    public function toModelExtractsImmediateWithdrawDataCorrectly(): void
+    {
+        $withdraw = AccountWithdraw::createImmediate(
+            Uuid::fromString('550e8400-e29b-41d4-a716-446655440001'),
+            Uuid::fromString('550e8400-e29b-41d4-a716-446655440000'),
+            WithdrawMethod::PIX,
+            Money::fromFloat(150.75),
+        );
+
+        $data = $this->mapper->toModel($withdraw);
+
+        $this->assertSame('550e8400-e29b-41d4-a716-446655440001', $data['id']);
+        $this->assertSame('550e8400-e29b-41d4-a716-446655440000', $data['account_id']);
+        $this->assertSame('pix', $data['method']);
+        $this->assertSame('150.75', $data['amount']);
+        $this->assertFalse($data['scheduled']);
+        $this->assertNull($data['scheduled_for']);
+        $this->assertTrue($data['done']);
+        $this->assertFalse($data['error']);
+        $this->assertNull($data['error_reason']);
+    }
+
+    #[Test]
+    public function toModelExtractsScheduledWithdrawDataCorrectly(): void
+    {
+        $scheduledFor = new DateTimeImmutable('2026-06-15 10:00:00');
+
+        $withdraw = AccountWithdraw::createScheduled(
+            Uuid::fromString('550e8400-e29b-41d4-a716-446655440002'),
+            Uuid::fromString('550e8400-e29b-41d4-a716-446655440000'),
+            WithdrawMethod::PIX,
+            Money::fromFloat(500.00),
+            $scheduledFor,
+        );
+
+        $data = $this->mapper->toModel($withdraw);
+
+        $this->assertSame('550e8400-e29b-41d4-a716-446655440002', $data['id']);
+        $this->assertTrue($data['scheduled']);
+        $this->assertSame('2026-06-15 10:00:00', $data['scheduled_for']);
+        $this->assertFalse($data['done']);
+        $this->assertFalse($data['error']);
+    }
+
+    // -- pixToModel --
+
+    #[Test]
+    public function pixToModelExtractsDataCorrectly(): void
+    {
+        $pix = AccountWithdrawPix::create(
+            Uuid::fromString('550e8400-e29b-41d4-a716-446655440001'),
+            PixKey::create('email', 'fulano@email.com'),
+        );
+
+        $data = $this->mapper->pixToModel($pix);
+
+        $this->assertSame('550e8400-e29b-41d4-a716-446655440001', $data['account_withdraw_id']);
+        $this->assertSame('email', $data['type']);
+        $this->assertSame('fulano@email.com', $data['key']);
     }
 }

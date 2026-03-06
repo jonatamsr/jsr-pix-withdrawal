@@ -33,6 +33,30 @@ class WithdrawMapper
         );
     }
 
+    public function toModel(AccountWithdraw $withdraw): array
+    {
+        return [
+            'id' => $withdraw->id()->value(),
+            'account_id' => $withdraw->accountId()->value(),
+            'method' => $withdraw->method()->value,
+            'amount' => $withdraw->amount()->toDecimal(),
+            'scheduled' => $withdraw->isScheduled(),
+            'scheduled_for' => $withdraw->scheduledFor()?->format('Y-m-d H:i:s'),
+            'done' => $withdraw->isDone(),
+            'error' => $withdraw->hasError(),
+            'error_reason' => $withdraw->errorReason(),
+        ];
+    }
+
+    public function pixToModel(AccountWithdrawPix $pix): array
+    {
+        return [
+            'account_withdraw_id' => $pix->accountWithdrawId()->value(),
+            'type' => $pix->pixKey()->type()->value,
+            'key' => $pix->pixKey()->key(),
+        ];
+    }
+
     public function pixToDomain(AccountWithdrawPixModel $model): AccountWithdrawPix
     {
         return AccountWithdrawPix::create(
