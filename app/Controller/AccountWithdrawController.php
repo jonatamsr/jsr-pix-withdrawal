@@ -7,16 +7,19 @@ namespace App\Controller;
 use App\Application\DTO\CreateWithdrawInput;
 use App\Application\UseCase\CreateWithdrawUseCase;
 use App\Request\CreateWithdrawRequest;
-use Psr\Http\Message\ResponseInterface;
+use Hyperf\HttpServer\Contract\ResponseInterface;
+use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 
 class AccountWithdrawController extends AbstractController
 {
     public function __construct(
+        ResponseInterface $response,
         private readonly CreateWithdrawUseCase $useCase,
     ) {
+        parent::__construct($response);
     }
 
-    public function withdraw(string $accountId, CreateWithdrawRequest $request): ResponseInterface
+    public function withdraw(string $accountId, CreateWithdrawRequest $request): PsrResponseInterface
     {
         $validated = $request->validated();
 

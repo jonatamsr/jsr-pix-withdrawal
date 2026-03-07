@@ -16,6 +16,7 @@ use App\Infrastructure\Persistence\Model\AccountWithdrawPixModel;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 /**
  * @internal
@@ -184,5 +185,29 @@ class WithdrawMapperTest extends TestCase
         $this->assertSame('550e8400-e29b-41d4-a716-446655440001', $data['account_withdraw_id']);
         $this->assertSame('email', $data['type']);
         $this->assertSame('fulano@email.com', $data['key']);
+    }
+
+    // -- toDateTimeImmutable (private) --
+
+    #[Test]
+    public function toDateTimeImmutableReturnsValueWhenAlreadyDateTimeImmutable(): void
+    {
+        $method = new ReflectionMethod(WithdrawMapper::class, 'toDateTimeImmutable');
+        $expected = new DateTimeImmutable('2026-03-05 10:30:00');
+
+        $result = $method->invoke($this->mapper, $expected);
+
+        $this->assertSame($expected, $result);
+    }
+
+    #[Test]
+    public function toDateTimeImmutableParsesStringValue(): void
+    {
+        $method = new ReflectionMethod(WithdrawMapper::class, 'toDateTimeImmutable');
+
+        $result = $method->invoke($this->mapper, '2026-06-15 12:00:00');
+
+        $this->assertInstanceOf(DateTimeImmutable::class, $result);
+        $this->assertSame('2026-06-15 12:00:00', $result->format('Y-m-d H:i:s'));
     }
 }

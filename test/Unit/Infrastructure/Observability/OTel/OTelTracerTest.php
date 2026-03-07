@@ -7,18 +7,25 @@ namespace HyperfTest\Unit\Infrastructure\Observability\OTel;
 use App\Infrastructure\Observability\OTel\OTelSpan;
 use App\Infrastructure\Observability\OTel\OTelSpanContext;
 use App\Infrastructure\Observability\OTel\OTelTracer;
+use DateTimeImmutable;
 use HyperfTest\Support\UsesMockery;
 use Mockery;
 use Mockery\MockInterface;
 use OpenTelemetry\API\Trace\SpanBuilderInterface;
 use OpenTelemetry\API\Trace\SpanContextInterface;
 use OpenTelemetry\API\Trace\SpanInterface as OTelSpanInterface;
+use OpenTelemetry\API\Trace\SpanKind;
 use OpenTelemetry\API\Trace\TracerInterface as OTelTracerInterface;
 use OpenTelemetry\SDK\Trace\TracerProviderInterface;
+use OpenTracing\Reference;
+use OpenTracing\SpanContext;
+use OpenTracing\StartSpanOptions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use const OpenTracing\Formats\TEXT_MAP;
+use const OpenTracing\Tags\SPAN_KIND;
 
 /**
  * @internal
@@ -154,7 +161,7 @@ class OTelTracerTest extends TestCase
         $context = $this->tracer->extract(TEXT_MAP, $carrier);
 
         $this->assertInstanceOf(OTelSpanContext::class, $context);
-        /* @var OTelSpanContext $context */
+        assert($context instanceof OTelSpanContext);
         $this->assertSame('abcdef1234567890', $context->getTraceId());
         $this->assertSame('1234abcd5678', $context->getSpanId());
     }
@@ -189,5 +196,170 @@ class OTelTracerTest extends TestCase
         $this->provider->shouldReceive('forceFlush')->once();
 
         $this->tracer->flush();
+    }
+
+    #[Test]
+    public function startSpanUsesParentFromReferences(): void
+    {
+        $parentContext = new OTelSpanContext(
+            'aaaabbbbccccdddd1111222233334444',
+            'eeee5555ffff6666',
+        );
+
+        $otelSpanContext = Mockery::mock(SpanContextInterface::class);
+        $otelSpanContext->shouldReceive('getTraceId')->andReturn('t');
+        $otelSpanContext->shouldReceive('getSpanId')->andReturn('s');
+
+        $otelSpan = Mockery::mock(OTelSpanInterface::class);
+        $otelSpan->shouldReceive('getContext')->andReturn($otelSpanContext);
+
+        $spanBuilder = Mockery::mock(SpanBuilderInterface::class);
+        $spanBuilder->shouldReceive('setParent')->once()->andReturnSelf();
+        $spanBuilder->shouldReceive('startSpan')->andReturn($otelSpan);
+
+        $this->otelTracer->shouldReceive('spanBuilder')->with('child.span')->andReturn($spanBuilder);
+
+        $options = StartSpanOptions::create([
+            'references' => [new Reference(Reference::CHILD_OF, $parentContext)],
+        ]);
+
+        $span = $this->tracer->startSpan('child.span', $options);
+
+        $this->assertInstanceOf(OTelSpan::class, $span);
+    }
+
+    #[Test]
+    public function startSpanUsesActiveSpanAsParent(): void
+    {
+        $activeOtelSpanContext = Mockery::mock(SpanContextInterface::class);
+        $activeOtelSpanContext->shouldReceive('getTraceId')->andReturn('t1');
+        $activeOtelSpanContext->shouldReceive('getSpanId')->andReturn('s1');
+
+        $activeOtelSpan = Mockery::mock(OTelSpanInterface::class);
+        $activeOtelSpan->shouldReceive('getContext')->andReturn($activeOtelSpanContext);
+        $activeOtelSpan->shouldReceive('storeInContext')->andReturnUsing(fn ($ctx) => $ctx);
+        $activeOtelSpan->shouldReceive('end');
+
+        $activeBuilder = Mockery::mock(SpanBuilderInterface::class);
+        $activeBuilder->shouldReceive('startSpan')->andReturn($activeOtelSpan);
+
+        $this->otelTracer->shouldReceive('spanBuilder')->with('parent')->andReturn($activeBuilder);
+
+        $scope = $this->tracer->startActiveSpan('parent');
+
+        // Now start a child span - it should use the active span as parent
+        $childOtelSpanContext = Mockery::mock(SpanContextInterface::class);
+        $childOtelSpanContext->shouldReceive('getTraceId')->andReturn('t1');
+        $childOtelSpanContext->shouldReceive('getSpanId')->andReturn('s2');
+
+        $childOtelSpan = Mockery::mock(OTelSpanInterface::class);
+        $childOtelSpan->shouldReceive('getContext')->andReturn($childOtelSpanContext);
+
+        $childBuilder = Mockery::mock(SpanBuilderInterface::class);
+        $childBuilder->shouldReceive('setParent')->once()->andReturnSelf();
+        $childBuilder->shouldReceive('startSpan')->andReturn($childOtelSpan);
+
+        $this->otelTracer->shouldReceive('spanBuilder')->with('child')->andReturn($childBuilder);
+
+        $childSpan = $this->tracer->startSpan('child');
+
+        $this->assertInstanceOf(OTelSpan::class, $childSpan);
+
+        $scope->close();
+    }
+
+    #[Test]
+    #[DataProvider('spanKindProvider')]
+    public function startSpanSetsSpanKindFromTags(string $spanKindTag, int $expectedKind): void
+    {
+        $otelSpanContext = Mockery::mock(SpanContextInterface::class);
+        $otelSpanContext->shouldReceive('getTraceId')->andReturn('t');
+        $otelSpanContext->shouldReceive('getSpanId')->andReturn('s');
+
+        $otelSpan = Mockery::mock(OTelSpanInterface::class);
+        $otelSpan->shouldReceive('getContext')->andReturn($otelSpanContext);
+
+        $spanBuilder = Mockery::mock(SpanBuilderInterface::class);
+        $spanBuilder->shouldReceive('setSpanKind')->once()->with($expectedKind)->andReturnSelf();
+        $spanBuilder->shouldReceive('startSpan')->andReturn($otelSpan);
+
+        $this->otelTracer->shouldReceive('spanBuilder')->andReturn($spanBuilder);
+
+        $this->tracer->startSpan('kind.span', [
+            'tags' => [SPAN_KIND => $spanKindTag],
+            'ignore_active_span' => true,
+        ]);
+    }
+
+    public static function spanKindProvider(): array
+    {
+        return [
+            'server' => ['server', SpanKind::KIND_SERVER],
+            'client' => ['client', SpanKind::KIND_CLIENT],
+            'producer' => ['producer', SpanKind::KIND_PRODUCER],
+            'consumer' => ['consumer', SpanKind::KIND_CONSUMER],
+            'unknown' => ['something_else', SpanKind::KIND_INTERNAL],
+        ];
+    }
+
+    #[Test]
+    public function startSpanSetsStartTimeFromDateTimeInterface(): void
+    {
+        $otelSpanContext = Mockery::mock(SpanContextInterface::class);
+        $otelSpanContext->shouldReceive('getTraceId')->andReturn('t');
+        $otelSpanContext->shouldReceive('getSpanId')->andReturn('s');
+
+        $otelSpan = Mockery::mock(OTelSpanInterface::class);
+        $otelSpan->shouldReceive('getContext')->andReturn($otelSpanContext);
+
+        $startTime = new DateTimeImmutable('2026-01-01 00:00:00.000000');
+        $expectedNanos = (int) ($startTime->format('U.u') * 1_000_000_000);
+
+        $spanBuilder = Mockery::mock(SpanBuilderInterface::class);
+        $spanBuilder->shouldReceive('setStartTimestamp')->once()->with($expectedNanos)->andReturnSelf();
+        $spanBuilder->shouldReceive('startSpan')->andReturn($otelSpan);
+
+        $this->otelTracer->shouldReceive('spanBuilder')->andReturn($spanBuilder);
+
+        $this->tracer->startSpan('timed.span', [
+            'start_time' => $startTime,
+            'ignore_active_span' => true,
+        ]);
+    }
+
+    #[Test]
+    public function startSpanSetsStartTimeFromNumericMicroseconds(): void
+    {
+        $otelSpanContext = Mockery::mock(SpanContextInterface::class);
+        $otelSpanContext->shouldReceive('getTraceId')->andReturn('t');
+        $otelSpanContext->shouldReceive('getSpanId')->andReturn('s');
+
+        $otelSpan = Mockery::mock(OTelSpanInterface::class);
+        $otelSpan->shouldReceive('getContext')->andReturn($otelSpanContext);
+
+        $microseconds = 1_700_000_000_000_000.0; // microseconds
+        $expectedNanos = (int) ($microseconds * 1_000);
+
+        $spanBuilder = Mockery::mock(SpanBuilderInterface::class);
+        $spanBuilder->shouldReceive('setStartTimestamp')->once()->with($expectedNanos)->andReturnSelf();
+        $spanBuilder->shouldReceive('startSpan')->andReturn($otelSpan);
+
+        $this->otelTracer->shouldReceive('spanBuilder')->andReturn($spanBuilder);
+
+        $this->tracer->startSpan('timed.span', [
+            'start_time' => $microseconds,
+            'ignore_active_span' => true,
+        ]);
+    }
+
+    #[Test]
+    public function injectIgnoresNonOTelSpanContext(): void
+    {
+        $context = Mockery::mock(SpanContext::class);
+        $carrier = [];
+
+        $this->tracer->inject($context, TEXT_MAP, $carrier);
+
+        $this->assertEmpty($carrier);
     }
 }

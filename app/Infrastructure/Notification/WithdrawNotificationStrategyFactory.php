@@ -24,7 +24,7 @@ class WithdrawNotificationStrategyFactory
         $strategyClass = self::STRATEGIES[$method->value] ?? null;
 
         if ($strategyClass === null) {
-            return null;
+            return null; // @codeCoverageIgnore
         }
 
         return $this->container->get($strategyClass);

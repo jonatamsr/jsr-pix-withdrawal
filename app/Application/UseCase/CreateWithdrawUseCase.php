@@ -9,6 +9,7 @@ use App\Application\DTO\CreateWithdrawOutput;
 use App\Application\Factory\WithdrawMethodFactory;
 use App\Domain\Entity\Account;
 use App\Domain\Entity\AccountWithdraw;
+use App\Domain\Enum\Timezone;
 use App\Domain\Enum\WithdrawMethod;
 use App\Domain\Event\WithdrawCompleted;
 use App\Domain\Exception\AccountNotFoundException;
@@ -21,13 +22,10 @@ use App\Domain\Strategy\WithdrawMethodData;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
 use DateTimeImmutable;
-use DateTimeZone;
 use Psr\Log\LoggerInterface;
 
 class CreateWithdrawUseCase
 {
-    private const string CLIENT_TIMEZONE = 'America/Sao_Paulo';
-
     public function __construct(
         private readonly AccountRepositoryInterface $accountRepository,
         private readonly WithdrawRepositoryInterface $withdrawRepository,
@@ -124,8 +122,8 @@ class CreateWithdrawUseCase
 
     private function parseScheduleDate(string $schedule): DateTimeImmutable
     {
-        $clientTz = new DateTimeZone(self::CLIENT_TIMEZONE);
-        $utcTz = new DateTimeZone('UTC');
+        $clientTz = Timezone::CLIENT->toDateTimeZone();
+        $storageTz = Timezone::STORAGE->toDateTimeZone();
 
         $date = DateTimeImmutable::createFromFormat('Y-m-d H:i', $schedule, $clientTz);
 
@@ -133,9 +131,9 @@ class CreateWithdrawUseCase
             throw InvalidScheduleDateException::invalidFormat($schedule);
         }
 
-        $date = $date->setTimezone($utcTz);
+        $date = $date->setTimezone($storageTz);
 
-        if ($date <= new DateTimeImmutable('now', $utcTz)) {
+        if ($date <= new DateTimeImmutable('now', $storageTz)) {
             throw InvalidScheduleDateException::inThePast();
         }
 
@@ -151,7 +149,7 @@ class CreateWithdrawUseCase
             amount: (float) $withdraw->amount()->toDecimal(),
             scheduled: $withdraw->isScheduled(),
             scheduledFor: $withdraw->scheduledFor()
-                ?->setTimezone(new DateTimeZone(self::CLIENT_TIMEZONE))
+                ?->setTimezone(Timezone::CLIENT->toDateTimeZone())
                 ->format('Y-m-d H:i:s'),
             done: $withdraw->isDone(),
         );

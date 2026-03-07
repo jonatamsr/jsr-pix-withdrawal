@@ -139,7 +139,7 @@ class EloquentAccountRepositoryTest extends TestCase
     // -- save --
 
     #[Test]
-    public function savePersistsAccountViaUpdateOrInsert(): void
+    public function savePersistsAccountViaUpdateOrCreate(): void
     {
         $account = Account::create(
             Uuid::fromString('550e8400-e29b-41d4-a716-446655440000'),
@@ -154,7 +154,7 @@ class EloquentAccountRepositoryTest extends TestCase
         ];
 
         $this->model->shouldReceive('newQuery')->once()->andReturn($this->queryBuilder);
-        $this->queryBuilder->shouldReceive('updateOrInsert')
+        $this->queryBuilder->shouldReceive('updateOrCreate')
             ->with(
                 ['id' => '550e8400-e29b-41d4-a716-446655440000'],
                 $expectedData,

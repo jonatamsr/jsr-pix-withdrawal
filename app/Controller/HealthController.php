@@ -5,19 +5,22 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Hyperf\DbConnection\Db;
+use Hyperf\HttpServer\Contract\ResponseInterface;
 use Hyperf\Redis\Redis;
-use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Throwable;
 
 class HealthController extends AbstractController
 {
     public function __construct(
+        ResponseInterface $response,
         private readonly Db $db,
         private readonly Redis $redis,
     ) {
+        parent::__construct($response);
     }
 
-    public function check(): ResponseInterface
+    public function check(): PsrResponseInterface
     {
         $checks = [
             'mysql' => $this->checkMysql(),

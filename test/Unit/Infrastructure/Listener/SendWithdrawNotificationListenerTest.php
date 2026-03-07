@@ -15,6 +15,7 @@ use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Listener\SendWithdrawNotificationListener;
 use App\Infrastructure\Notification\WithdrawNotificationStrategyFactory;
 use App\Infrastructure\Notification\WithdrawNotificationStrategyInterface;
+use DateTimeImmutable;
 use HyperfTest\Support\MocksLogger;
 use HyperfTest\Support\UsesMockery;
 use Mockery;
@@ -60,7 +61,7 @@ class SendWithdrawNotificationListenerTest extends TestCase
         $event = new WithdrawCompleted($withdraw, $this->createAccount(), $methodData);
 
         $strategy = Mockery::mock(WithdrawNotificationStrategyInterface::class);
-        $strategy->shouldReceive('notify')->once()->with($withdraw, $methodData);
+        $strategy->shouldReceive('notify')->once()->with($withdraw, $methodData, Mockery::type(DateTimeImmutable::class));
 
         $this->strategyFactory->shouldReceive('create')
             ->once()

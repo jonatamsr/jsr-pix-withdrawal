@@ -12,8 +12,10 @@ use App\Domain\ValueObject\PixKey;
 use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Mail\SymfonyMailerService;
 use App\Infrastructure\Mail\Template\WithdrawCompletedEmailTemplate;
+use DateTimeImmutable;
 use HyperfTest\Support\UsesMockery;
 use Mockery;
+use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Mailer\MailerInterface;
@@ -26,9 +28,9 @@ class SymfonyMailerServiceTest extends TestCase
 {
     use UsesMockery;
 
-    private MailerInterface $mailer;
+    private MailerInterface|MockInterface $mailer;
 
-    private WithdrawCompletedEmailTemplate $template;
+    private MockInterface|WithdrawCompletedEmailTemplate $template;
 
     private SymfonyMailerService $service;
 
@@ -44,18 +46,19 @@ class SymfonyMailerServiceTest extends TestCase
     {
         $withdraw = $this->createWithdraw('150.75');
         $pix = $this->createPix('user@example.com');
+        $processedAt = new DateTimeImmutable();
         $expectedEmail = new Email();
 
         $this->template->shouldReceive('build')
             ->once()
-            ->with('no-reply@test.local', $withdraw, $pix)
+            ->with('no-reply@test.local', $withdraw, $pix, $processedAt)
             ->andReturn($expectedEmail);
 
         $this->mailer->shouldReceive('send')
             ->once()
             ->with($expectedEmail);
 
-        $this->service->sendWithdrawCompleted($withdraw, $pix);
+        $this->service->sendWithdrawCompleted($withdraw, $pix, $processedAt);
     }
 
     private function createWithdraw(string $amount): AccountWithdraw

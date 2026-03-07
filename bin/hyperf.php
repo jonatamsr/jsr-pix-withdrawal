@@ -3,6 +3,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Enum\Timezone;
 use Hyperf\Contract\ApplicationInterface;
 use Hyperf\Di\ClassLoader;
 use Hyperf\Engine\DefaultOption;
@@ -13,11 +14,12 @@ ini_set('display_startup_errors', 'on');
 ini_set('memory_limit', '1G');
 
 error_reporting(E_ALL);
-date_default_timezone_set('UTC');
 
 ! defined('BASE_PATH') && define('BASE_PATH', dirname(__DIR__, 1));
 
 require BASE_PATH . '/vendor/autoload.php';
+
+date_default_timezone_set(Timezone::STORAGE->value);
 
 ! defined('SWOOLE_HOOK_FLAGS') && define('SWOOLE_HOOK_FLAGS', DefaultOption::hookFlags());
 
