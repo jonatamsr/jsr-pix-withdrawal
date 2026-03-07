@@ -25,8 +25,8 @@ RUN addgroup -g ${GID} application && \
     adduser -S -D -u ${UID} -G application -s /bin/ash -h /home/application application
 
 # Install gRPC and protobuf extensions (required by open-telemetry/transport-grpc)
-# Install Xdebug for debugging unit tests
-RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf php84-pecl-xdebug
+# Install Xdebug for debugging unit tests, and PCOV for code coverage
+RUN apk add --no-cache php84-pecl-grpc php84-pecl-protobuf php84-pecl-xdebug php84-pecl-pcov
 
 # update
 RUN set -ex \
@@ -44,6 +44,12 @@ RUN set -ex \
         echo "date.timezone=${TIMEZONE}"; \
         echo "grpc.enable_fork_support=1"; \
     } | tee conf.d/99_overrides.ini \
+    # - config PCOV
+    && { \
+        echo "extension=pcov.so"; \
+        echo "pcov.enabled=1"; \
+        echo "pcov.directory=."; \
+    } | tee conf.d/98_pcov.ini \
     # - config Xdebug (off by default, enabled on demand via XDEBUG_MODE env)
     && { \
         echo "zend_extension=xdebug.so"; \
