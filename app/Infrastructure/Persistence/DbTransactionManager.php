@@ -7,9 +7,6 @@ namespace App\Infrastructure\Persistence;
 use App\Domain\Port\TransactionManagerInterface;
 use Hyperf\DbConnection\Db;
 
-/**
- * @codeCoverageIgnore
- */
 class DbTransactionManager implements TransactionManagerInterface
 {
     public function __construct(private readonly Db $db)
