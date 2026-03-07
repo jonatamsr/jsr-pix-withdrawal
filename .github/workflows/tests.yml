@@ -39,6 +39,61 @@ jobs:
       - name: Run unit tests
         run: composer test
 
+      - name: Coverage summary
+        if: always()
+        run: |
+          if [ ! -f coverage/coverage.xml ]; then
+            echo "⚠️ Coverage report not generated" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          METRICS=$(php -r '
+            $xml = simplexml_load_file("coverage/coverage.xml");
+            $metrics = $xml->project->metrics;
+            $stmts = (int) $metrics["statements"];
+            $covered = (int) $metrics["coveredstatements"];
+            $methods = (int) $metrics["methods"];
+            $coveredMethods = (int) $metrics["coveredmethods"];
+            $classes = (int) $metrics["classes"];
+            $coveredClasses = (int) $metrics["coveredclasses"];
+            $linePct = $stmts > 0 ? round($covered / $stmts * 100, 2) : 0;
+            $methodPct = $methods > 0 ? round($coveredMethods / $methods * 100, 2) : 0;
+            echo json_encode([
+              "lines" => "$covered/$stmts ($linePct%)",
+              "methods" => "$coveredMethods/$methods ($methodPct%)",
+              "line_pct" => $linePct,
+            ]);
+          ')
+
+          LINE_PCT=$(echo "$METRICS" | php -r 'echo json_decode(file_get_contents("php://stdin"))->line_pct;')
+          LINES=$(echo "$METRICS" | php -r 'echo json_decode(file_get_contents("php://stdin"))->lines;')
+          METHODS=$(echo "$METRICS" | php -r 'echo json_decode(file_get_contents("php://stdin"))->methods;')
+
+          if (( $(echo "$LINE_PCT >= 80" | bc -l) )); then
+            BADGE="🟢"
+          elif (( $(echo "$LINE_PCT >= 60" | bc -l) )); then
+            BADGE="🟡"
+          else
+            BADGE="🔴"
+          fi
+
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## $BADGE Code Coverage
+
+          | Metric       | Coverage       |
+          |--------------|----------------|
+          | **Lines**    | $LINES         |
+          | **Methods**  | $METHODS       |
+          EOF
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
   static-analysis:
     name: PHPStan
     runs-on: ubuntu-latest
