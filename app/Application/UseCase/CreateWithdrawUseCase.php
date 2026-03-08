@@ -47,29 +47,17 @@ class CreateWithdrawUseCase
             'scheduled' => $input->schedule !== null,
         ]);
 
-        try {
-            $strategy = $this->factory->create($input->method);
-            $methodData = $strategy->validateAndBuild($input->methodData);
+        $strategy = $this->factory->create($input->method);
+        $methodData = $strategy->validateAndBuild($input->methodData);
 
-            $accountId = Uuid::fromString($input->accountId);
-            $amount = Money::fromFloat($input->amount);
-            $withdrawMethod = WithdrawMethod::from(strtolower(trim($input->method)));
+        $accountId = Uuid::fromString($input->accountId);
+        $amount = Money::fromFloat($input->amount);
+        $withdrawMethod = WithdrawMethod::from(strtolower(trim($input->method)));
 
-            if ($input->schedule !== null) {
-                $output = $this->handleScheduled($accountId, $withdrawMethod, $amount, $methodData, $input->schedule);
-            } else {
-                $output = $this->handleImmediate($accountId, $withdrawMethod, $amount, $methodData);
-            }
-        } catch (Throwable $e) {
-            $this->logger->warning('Withdraw failed', [
-                'account_id' => $input->accountId,
-                'method' => $input->method,
-                'amount' => $input->amount,
-                'reason' => $e->getMessage(),
-                'exception' => $e::class,
-            ]);
-
-            throw $e;
+        if ($input->schedule !== null) {
+            $output = $this->handleScheduled($accountId, $withdrawMethod, $amount, $methodData, $input->schedule);
+        } else {
+            $output = $this->handleImmediate($accountId, $withdrawMethod, $amount, $methodData);
         }
 
         $this->logger->info($output->scheduled ? 'Withdraw scheduled' : 'Withdraw completed', [
@@ -121,20 +109,33 @@ class CreateWithdrawUseCase
         WithdrawMethodData $methodData,
         string $schedule,
     ): CreateWithdrawOutput {
-        $scheduledFor = $this->parseScheduleDate($schedule);
+        try {
+            $scheduledFor = $this->parseScheduleDate($schedule);
 
-        $account = $this->accountRepository->findById($accountId);
-        if ($account === null) {
-            throw new AccountNotFoundException($accountId->value());
+            $account = $this->accountRepository->findById($accountId);
+            if ($account === null) {
+                throw new AccountNotFoundException($accountId->value());
+            }
+
+            $withdrawId = Uuid::generate();
+
+            $withdraw = AccountWithdraw::createScheduled($withdrawId, $accountId, $method, $amount, $scheduledFor);
+
+            $this->withdrawRepository->save($withdraw, $methodData);
+
+            return $this->buildOutput($withdraw);
+        } catch (Throwable $e) {
+            $this->logger->warning('Withdraw schedule attempt failed', [
+                'account_id' => $accountId->value(),
+                'method' => $method->value,
+                'amount' => $amount->toDecimal(),
+                'schedule' => $schedule,
+                'reason' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
+
+            throw $e;
         }
-
-        $withdrawId = Uuid::generate();
-
-        $withdraw = AccountWithdraw::createScheduled($withdrawId, $accountId, $method, $amount, $scheduledFor);
-
-        $this->withdrawRepository->save($withdraw, $methodData);
-
-        return $this->buildOutput($withdraw);
     }
 
     private function parseScheduleDate(string $schedule): DateTimeImmutable
