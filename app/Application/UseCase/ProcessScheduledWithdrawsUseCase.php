@@ -24,7 +24,8 @@ class ProcessScheduledWithdrawsUseCase
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger,
         private readonly TransactionManagerInterface $transactionManager,
-    ) {}
+    ) {
+    }
 
     public function execute(): void
     {

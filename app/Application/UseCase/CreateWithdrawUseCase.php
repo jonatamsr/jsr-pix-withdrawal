@@ -35,7 +35,8 @@ class CreateWithdrawUseCase
         private readonly WithdrawMethodFactory $factory,
         private readonly LoggerInterface $logger,
         private readonly TransactionManagerInterface $transactionManager,
-    ) {}
+    ) {
+    }
 
     public function execute(CreateWithdrawInput $input): CreateWithdrawOutput
     {
