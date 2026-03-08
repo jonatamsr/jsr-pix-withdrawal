@@ -497,7 +497,7 @@ flowchart TB
     MAIL["📧 <b>Mailhog</b><br/><span style='font-size:12px;color:#94a3b8'>SMTP 1025 / UI 8025</span>"]:::ext
     JAE["📊 <b>Jaeger</b><br/><span style='font-size:12px;color:#94a3b8'>OTLP 4318 / UI 16686</span>"]:::ext
 
-    USER == "JSON HTTPS" ==> API
+    USER == "JSON HTTP" ==> API
     API ==>|"TCP 3306"| MYSQL
     API ==>|"TCP 6379"| REDIS
     CRON -->|"TCP 3306"| MYSQL
@@ -557,7 +557,6 @@ flowchart TB
 
     Middlewares ==> Controllers
     CTRL ==> UC_CREATE
-    CTRL -.-> FACT
     UC_CREATE ==> REPO_ACC & REPO_WD & TX & EVT
     UC_PROC ==> REPO_ACC & REPO_WD & TX & EVT
 
