@@ -32,7 +32,7 @@ class LogWithdrawFailedListener implements ListenerInterface
 
         $withdraw = $event->withdraw();
 
-        $this->logger->error('Withdraw failed', [
+        $this->logger->warning('Withdraw failed', [
             'withdraw_id' => $withdraw->id()->value(),
             'account_id' => $withdraw->accountId()->value(),
             'method' => $withdraw->method()->value,

@@ -48,7 +48,7 @@ class LogWithdrawFailedListenerTest extends TestCase
         $withdraw = $this->createWithdraw();
         $event = new WithdrawFailed($withdraw, 'Insufficient balance');
 
-        $this->logger->shouldReceive('error')
+        $this->logger->shouldReceive('warning')
             ->once()
             ->with('Withdraw failed', Mockery::on(function (array $context) use ($withdraw): bool {
                 $this->assertSame($withdraw->id()->value(), $context['withdraw_id']);
@@ -67,7 +67,7 @@ class LogWithdrawFailedListenerTest extends TestCase
     #[Test]
     public function ignoresNonWithdrawFailedEvents(): void
     {
-        $this->logger->shouldNotReceive('error');
+        $this->logger->shouldNotReceive('warning');
 
         $this->listener->process(new stdClass());
     }

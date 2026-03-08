@@ -24,8 +24,7 @@ class ProcessScheduledWithdrawsUseCase
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger,
         private readonly TransactionManagerInterface $transactionManager,
-    ) {
-    }
+    ) {}
 
     public function execute(): void
     {
@@ -94,12 +93,5 @@ class ProcessScheduledWithdrawsUseCase
         });
 
         $this->eventDispatcher->dispatch(new WithdrawFailed($withdraw, $reason));
-
-        $this->logger->warning('Scheduled withdrawal failed', [
-            'withdraw_id' => $withdraw->id()->value(),
-            'account_id' => $withdraw->accountId()->value(),
-            'amount' => $withdraw->amount()->toDecimal(),
-            'reason' => $reason,
-        ]);
     }
 }

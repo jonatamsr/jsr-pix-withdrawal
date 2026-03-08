@@ -22,7 +22,7 @@ return [
             'class' => StreamHandler::class,
             'constructor' => [
                 'stream' => 'php://stdout',
-                'level' => Level::Debug,
+                'level' => Level::Info,
             ],
         ],
         'formatter' => [

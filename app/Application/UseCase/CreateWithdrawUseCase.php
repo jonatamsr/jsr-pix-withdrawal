@@ -12,6 +12,7 @@ use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Enum\Timezone;
 use App\Domain\Enum\WithdrawMethod;
 use App\Domain\Event\WithdrawCompleted;
+use App\Domain\Event\WithdrawFailed;
 use App\Domain\Exception\AccountNotFoundException;
 use App\Domain\Exception\InvalidScheduleDateException;
 use App\Domain\Port\AccountRepositoryInterface;
@@ -23,6 +24,7 @@ use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class CreateWithdrawUseCase
 {
@@ -33,8 +35,7 @@ class CreateWithdrawUseCase
         private readonly WithdrawMethodFactory $factory,
         private readonly LoggerInterface $logger,
         private readonly TransactionManagerInterface $transactionManager,
-    ) {
-    }
+    ) {}
 
     public function execute(CreateWithdrawInput $input): CreateWithdrawOutput
     {
@@ -45,20 +46,32 @@ class CreateWithdrawUseCase
             'scheduled' => $input->schedule !== null,
         ]);
 
-        $strategy = $this->factory->create($input->method);
-        $methodData = $strategy->validateAndBuild($input->methodData);
+        try {
+            $strategy = $this->factory->create($input->method);
+            $methodData = $strategy->validateAndBuild($input->methodData);
 
-        $accountId = Uuid::fromString($input->accountId);
-        $amount = Money::fromFloat($input->amount);
-        $withdrawMethod = WithdrawMethod::from(strtolower(trim($input->method)));
+            $accountId = Uuid::fromString($input->accountId);
+            $amount = Money::fromFloat($input->amount);
+            $withdrawMethod = WithdrawMethod::from(strtolower(trim($input->method)));
 
-        if ($input->schedule !== null) {
-            $output = $this->handleScheduled($accountId, $withdrawMethod, $amount, $methodData, $input->schedule);
-        } else {
-            $output = $this->handleImmediate($accountId, $withdrawMethod, $amount, $methodData);
+            if ($input->schedule !== null) {
+                $output = $this->handleScheduled($accountId, $withdrawMethod, $amount, $methodData, $input->schedule);
+            } else {
+                $output = $this->handleImmediate($accountId, $withdrawMethod, $amount, $methodData);
+            }
+        } catch (Throwable $e) {
+            $this->logger->warning('Withdraw failed', [
+                'account_id' => $input->accountId,
+                'method' => $input->method,
+                'amount' => $input->amount,
+                'reason' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
+
+            throw $e;
         }
 
-        $this->logger->info('Withdraw completed', [
+        $this->logger->info($output->scheduled ? 'Withdraw scheduled' : 'Withdraw completed', [
             'withdraw_id' => $output->id,
             'account_id' => $output->accountId,
             'done' => $output->done,
@@ -75,22 +88,25 @@ class CreateWithdrawUseCase
         WithdrawMethodData $methodData,
     ): CreateWithdrawOutput {
         $withdrawId = Uuid::generate();
+        $withdraw = AccountWithdraw::createImmediate($withdrawId, $accountId, $method, $amount);
 
-        /** @var array{0: AccountWithdraw, 1: Account} $result */
-        $result = $this->transactionManager->execute(function () use ($accountId, $withdrawId, $method, $amount, $methodData) {
-            $account = $this->accountRepository->findByIdWithLock($accountId);
+        try {
+            /** @var Account $account */
+            $account = $this->transactionManager->execute(function () use ($withdraw, $accountId, $amount, $methodData) {
+                $account = $this->accountRepository->findByIdWithLock($accountId);
 
-            $account->withdraw($amount);
+                $account->withdraw($amount);
 
-            $withdraw = AccountWithdraw::createImmediate($withdrawId, $accountId, $method, $amount);
+                $this->accountRepository->save($account);
+                $this->withdrawRepository->save($withdraw, $methodData);
 
-            $this->accountRepository->save($account);
-            $this->withdrawRepository->save($withdraw, $methodData);
+                return $account;
+            });
+        } catch (Throwable $e) {
+            $this->eventDispatcher->dispatch(new WithdrawFailed($withdraw, $e->getMessage()));
 
-            return [$withdraw, $account];
-        });
-
-        [$withdraw, $account] = $result;
+            throw $e;
+        }
 
         $this->eventDispatcher->dispatch(new WithdrawCompleted($withdraw, $account, $methodData));
 

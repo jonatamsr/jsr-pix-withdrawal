@@ -10,6 +10,7 @@ use App\Application\UseCase\CreateWithdrawUseCase;
 use App\Domain\Entity\Account;
 use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Event\WithdrawCompleted;
+use App\Domain\Event\WithdrawFailed;
 use App\Domain\Exception\AccountNotFoundException;
 use App\Domain\Exception\InsufficientBalanceException;
 use App\Domain\Exception\InvalidScheduleDateException;
@@ -83,7 +84,7 @@ class CreateWithdrawUseCaseTest extends TestCase
 
         $this->accountRepo->shouldReceive('save')
             ->once()
-            ->with(Mockery::on(fn (Account $account) => $account->balance()->toDecimal() === '849.25'));
+            ->with(Mockery::on(fn(Account $account) => $account->balance()->toDecimal() === '849.25'));
 
         $this->withdrawRepo->shouldReceive('save')
             ->once()
@@ -231,6 +232,15 @@ class CreateWithdrawUseCaseTest extends TestCase
             ->once()
             ->andReturn($account);
 
+        $this->eventDispatcher->shouldReceive('dispatch')
+            ->once()
+            ->with(Mockery::on(function (WithdrawFailed $event) use ($accountId): bool {
+                $this->assertSame($accountId->value(), $event->withdraw()->accountId()->value());
+                $this->assertNotEmpty($event->reason());
+
+                return true;
+            }));
+
         $this->expectException(InsufficientBalanceException::class);
 
         $this->useCase->execute(new CreateWithdrawInput(
@@ -251,6 +261,15 @@ class CreateWithdrawUseCaseTest extends TestCase
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->once()
             ->andThrow(new AccountNotFoundException($accountId->value()));
+
+        $this->eventDispatcher->shouldReceive('dispatch')
+            ->once()
+            ->with(Mockery::on(function (WithdrawFailed $event) use ($accountId): bool {
+                $this->assertSame($accountId->value(), $event->withdraw()->accountId()->value());
+                $this->assertNotEmpty($event->reason());
+
+                return true;
+            }));
 
         $this->expectException(AccountNotFoundException::class);
 
