@@ -7,6 +7,7 @@ namespace App\Application\UseCase;
 use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Event\WithdrawCompleted;
 use App\Domain\Event\WithdrawFailed;
+use App\Domain\Exception\AccountNotFoundException;
 use App\Domain\Exception\InsufficientBalanceException;
 use App\Domain\Port\AccountRepositoryInterface;
 use App\Domain\Port\EventDispatcherInterface;
@@ -55,6 +56,9 @@ class ProcessScheduledWithdrawsUseCase
         try {
             $account = $this->transactionManager->execute(function () use ($withdraw) {
                 $account = $this->accountRepository->findByIdWithLock($withdraw->accountId());
+                if ($account === null) {
+                    throw new AccountNotFoundException($withdraw->accountId()->value());
+                }
 
                 $account->withdraw($withdraw->amount());
 

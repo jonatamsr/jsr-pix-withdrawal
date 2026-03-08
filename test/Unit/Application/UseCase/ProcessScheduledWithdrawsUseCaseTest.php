@@ -10,7 +10,6 @@ use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Enum\WithdrawMethod;
 use App\Domain\Event\WithdrawCompleted;
 use App\Domain\Event\WithdrawFailed;
-use App\Domain\Exception\AccountNotFoundException;
 use App\Domain\Port\AccountRepositoryInterface;
 use App\Domain\Port\EventDispatcherInterface;
 use App\Domain\Port\TransactionManagerInterface;
@@ -304,7 +303,7 @@ class ProcessScheduledWithdrawsUseCaseTest extends TestCase
 
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->with(Mockery::on(fn (Uuid $id) => $id->value() === $account1Id->value()))
-            ->andThrow(new AccountNotFoundException($account1Id->value()));
+            ->andReturn(null);
 
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->with(Mockery::on(fn (Uuid $id) => $id->value() === $account2Id->value()))

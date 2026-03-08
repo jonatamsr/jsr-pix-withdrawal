@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace HyperfTest\Unit\Infrastructure\Persistence\Repository;
 
 use App\Domain\Entity\Account;
-use App\Domain\Exception\AccountNotFoundException;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Mapper\AccountMapper;
@@ -115,7 +114,7 @@ class EloquentAccountRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function findByIdWithLockThrowsWhenNotFound(): void
+    public function findByIdWithLockReturnsNullWhenNotFound(): void
     {
         $uuid = Uuid::fromString('550e8400-e29b-41d4-a716-446655440099');
 
@@ -131,9 +130,9 @@ class EloquentAccountRepositoryTest extends TestCase
             ->once()
             ->andReturn(null);
 
-        $this->expectException(AccountNotFoundException::class);
+        $result = $this->repository->findByIdWithLock($uuid);
 
-        $this->repository->findByIdWithLock($uuid);
+        $this->assertNull($result);
     }
 
     // -- save --
