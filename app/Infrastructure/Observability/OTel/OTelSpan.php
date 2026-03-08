@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Observability\OTel;
 
 use DateTimeInterface;
+use OpenTelemetry\API\Baggage\Baggage;
 use OpenTelemetry\API\Trace\SpanInterface as OTelSpanInterface;
 use OpenTelemetry\API\Trace\StatusCode;
 use OpenTracing\Span;
@@ -75,10 +76,14 @@ final class OTelSpan implements Span
         $this->span->addEvent('log', $fields);
     }
 
+    /**
+     * No-op: OpenTelemetry manages baggage via {@see Baggage},
+     * decoupled from the span. Method kept only to satisfy the OpenTracing\Span interface.
+     *
+     * @codeCoverageIgnore
+     */
     public function addBaggageItem(string $key, string $value): void
     {
-        // Baggage is not natively supported in OTel spans the same way;
-        // stored in the span context wrapper for compatibility.
     }
 
     public function getBaggageItem(string $key): ?string

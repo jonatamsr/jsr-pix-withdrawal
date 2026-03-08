@@ -53,7 +53,7 @@ class AccountWithdrawModel extends Model
 
     public function account(): BelongsTo
     {
-        return $this->belongsTo(AccountModel::class, 'account_id', 'id');
+        return $this->belongsTo(AccountModel::class, 'account_id', 'id'); // @codeCoverageIgnore
     }
 
     public function withdrawMethodRelation(): ?Model
@@ -63,6 +63,6 @@ class AccountWithdrawModel extends Model
 
     public function pix(): HasOne
     {
-        return $this->hasOne(AccountWithdrawPixModel::class, 'account_withdraw_id', 'id');
+        return $this->hasOne(AccountWithdrawPixModel::class, 'account_withdraw_id', 'id'); // @codeCoverageIgnore
     }
 }

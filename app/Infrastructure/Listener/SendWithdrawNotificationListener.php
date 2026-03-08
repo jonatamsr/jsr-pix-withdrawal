@@ -47,7 +47,7 @@ class SendWithdrawNotificationListener implements ListenerInterface
                 return;
             }
 
-            $strategy->notify($withdraw, $event->methodData());
+            $strategy->notify($withdraw, $event->methodData(), $event->occurredAt());
         } catch (Throwable $e) {
             $this->logger->error('Failed to send withdraw notification', [
                 'withdraw_id' => $withdraw->id()->value(),

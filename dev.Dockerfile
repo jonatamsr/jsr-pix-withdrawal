@@ -46,7 +46,6 @@ RUN set -ex \
     } | tee conf.d/99_overrides.ini \
     # - config PCOV
     && { \
-        echo "extension=pcov.so"; \
         echo "pcov.enabled=1"; \
         echo "pcov.directory=."; \
     } | tee conf.d/98_pcov.ini \

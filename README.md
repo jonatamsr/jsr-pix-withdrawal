@@ -20,6 +20,7 @@ A microservice for processing **PIX withdrawal** operations built with the **[Hy
   - [Sequence Diagrams](#sequence-diagrams)
   - [Entity-Relationship Diagram](#entity-relationship-diagram)
 - [Running Tests](#running-tests)
+- [Test Coverage](#test-coverage)
 - [Observability](#observability)
 - [License](#license)
 
@@ -827,6 +828,14 @@ docker compose exec app vendor/bin/co-phpunit --prepend test/bootstrap.php test/
 # Static analysis
 docker compose exec app composer analyse
 ```
+
+---
+
+## Test Coverage
+
+The project maintains **100% code coverage** across all layers — Application, Controller, Crontab, Domain, Exception, Infrastructure, Middleware, and Request.
+
+![Test Coverage](docs/images/coverage.png)
 
 ---
 

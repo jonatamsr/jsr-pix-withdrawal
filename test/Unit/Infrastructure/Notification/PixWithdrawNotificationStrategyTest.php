@@ -13,6 +13,7 @@ use App\Domain\ValueObject\PixKey;
 use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Mail\SymfonyMailerService;
 use App\Infrastructure\Notification\PixWithdrawNotificationStrategy;
+use DateTimeImmutable;
 use HyperfTest\Support\MocksLogger;
 use HyperfTest\Support\UsesMockery;
 use Mockery;
@@ -50,10 +51,14 @@ class PixWithdrawNotificationStrategyTest extends TestCase
 
         $this->mailerService->shouldReceive('sendWithdrawCompleted')
             ->once()
-            ->with($withdraw, Mockery::on(fn (AccountWithdrawPix $pix) => $pix->pixKey()->key() === 'user@example.com'
-                && $pix->accountWithdrawId()->value() === $withdraw->id()->value()));
+            ->with(
+                $withdraw,
+                Mockery::on(fn (AccountWithdrawPix $pix) => $pix->pixKey()->key() === 'user@example.com'
+                    && $pix->accountWithdrawId()->value() === $withdraw->id()->value()),
+                Mockery::type(DateTimeImmutable::class),
+            );
 
-        $this->strategy->notify($withdraw, $methodData);
+        $this->strategy->notify($withdraw, $methodData, new DateTimeImmutable());
     }
 
     #[Test]
@@ -63,7 +68,7 @@ class PixWithdrawNotificationStrategyTest extends TestCase
 
         $this->mailerService->shouldNotReceive('sendWithdrawCompleted');
 
-        $this->strategy->notify($withdraw, null);
+        $this->strategy->notify($withdraw, null, new DateTimeImmutable());
     }
 
     private function createWithdraw(): AccountWithdraw

@@ -14,7 +14,6 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
-use ReflectionClass;
 use RuntimeException;
 
 /**
@@ -38,11 +37,11 @@ class HealthControllerTest extends TestCase
         $this->redis = Mockery::mock(Redis::class);
         $this->response = Mockery::mock(ResponseInterface::class);
 
-        $this->controller = new HealthController($this->db, $this->redis);
-
-        $reflection = new ReflectionClass($this->controller);
-        $property = $reflection->getProperty('response');
-        $property->setValue($this->controller, $this->response);
+        $this->controller = new HealthController(
+            $this->response,
+            $this->db,
+            $this->redis
+        );
     }
 
     // -- all services healthy --

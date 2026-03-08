@@ -17,7 +17,6 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
-use ReflectionClass;
 
 /**
  * @internal
@@ -37,11 +36,10 @@ class AccountWithdrawControllerTest extends TestCase
         $this->useCase = Mockery::mock(CreateWithdrawUseCase::class);
         $this->response = Mockery::mock(ResponseInterface::class);
 
-        $this->controller = new AccountWithdrawController($this->useCase);
-
-        $reflection = new ReflectionClass($this->controller);
-        $property = $reflection->getProperty('response');
-        $property->setValue($this->controller, $this->response);
+        $this->controller = new AccountWithdrawController(
+            $this->response,
+            $this->useCase
+        );
     }
 
     // -- successful immediate withdrawal --

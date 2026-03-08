@@ -9,8 +9,10 @@ use App\Application\DTO\CreateWithdrawOutput;
 use App\Application\Factory\WithdrawMethodFactory;
 use App\Domain\Entity\Account;
 use App\Domain\Entity\AccountWithdraw;
+use App\Domain\Enum\Timezone;
 use App\Domain\Enum\WithdrawMethod;
 use App\Domain\Event\WithdrawCompleted;
+use App\Domain\Event\WithdrawFailed;
 use App\Domain\Exception\AccountNotFoundException;
 use App\Domain\Exception\InvalidScheduleDateException;
 use App\Domain\Port\AccountRepositoryInterface;
@@ -21,13 +23,11 @@ use App\Domain\Strategy\WithdrawMethodData;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\Uuid;
 use DateTimeImmutable;
-use DateTimeZone;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class CreateWithdrawUseCase
 {
-    private const string CLIENT_TIMEZONE = 'America/Sao_Paulo';
-
     public function __construct(
         private readonly AccountRepositoryInterface $accountRepository,
         private readonly WithdrawRepositoryInterface $withdrawRepository,
@@ -60,7 +60,7 @@ class CreateWithdrawUseCase
             $output = $this->handleImmediate($accountId, $withdrawMethod, $amount, $methodData);
         }
 
-        $this->logger->info('Withdraw completed', [
+        $this->logger->info($output->scheduled ? 'Withdraw scheduled' : 'Withdraw completed', [
             'withdraw_id' => $output->id,
             'account_id' => $output->accountId,
             'done' => $output->done,
@@ -77,22 +77,25 @@ class CreateWithdrawUseCase
         WithdrawMethodData $methodData,
     ): CreateWithdrawOutput {
         $withdrawId = Uuid::generate();
+        $withdraw = AccountWithdraw::createImmediate($withdrawId, $accountId, $method, $amount);
 
-        /** @var array{0: AccountWithdraw, 1: Account} $result */
-        $result = $this->transactionManager->execute(function () use ($accountId, $withdrawId, $method, $amount, $methodData) {
-            $account = $this->accountRepository->findByIdWithLock($accountId);
+        try {
+            /** @var Account $account */
+            $account = $this->transactionManager->execute(function () use ($withdraw, $accountId, $amount, $methodData) {
+                $account = $this->accountRepository->findByIdWithLock($accountId);
 
-            $account->withdraw($amount);
+                $account->withdraw($amount);
 
-            $withdraw = AccountWithdraw::createImmediate($withdrawId, $accountId, $method, $amount);
+                $this->accountRepository->save($account);
+                $this->withdrawRepository->save($withdraw, $methodData);
 
-            $this->accountRepository->save($account);
-            $this->withdrawRepository->save($withdraw, $methodData);
+                return $account;
+            });
+        } catch (Throwable $e) {
+            $this->eventDispatcher->dispatch(new WithdrawFailed($withdraw, $e->getMessage()));
 
-            return [$withdraw, $account];
-        });
-
-        [$withdraw, $account] = $result;
+            throw $e;
+        }
 
         $this->eventDispatcher->dispatch(new WithdrawCompleted($withdraw, $account, $methodData));
 
@@ -106,26 +109,39 @@ class CreateWithdrawUseCase
         WithdrawMethodData $methodData,
         string $schedule,
     ): CreateWithdrawOutput {
-        $scheduledFor = $this->parseScheduleDate($schedule);
+        try {
+            $scheduledFor = $this->parseScheduleDate($schedule);
 
-        $account = $this->accountRepository->findById($accountId);
-        if ($account === null) {
-            throw new AccountNotFoundException($accountId->value());
+            $account = $this->accountRepository->findById($accountId);
+            if ($account === null) {
+                throw new AccountNotFoundException($accountId->value());
+            }
+
+            $withdrawId = Uuid::generate();
+
+            $withdraw = AccountWithdraw::createScheduled($withdrawId, $accountId, $method, $amount, $scheduledFor);
+
+            $this->withdrawRepository->save($withdraw, $methodData);
+
+            return $this->buildOutput($withdraw);
+        } catch (Throwable $e) {
+            $this->logger->warning('Withdraw schedule attempt failed', [
+                'account_id' => $accountId->value(),
+                'method' => $method->value,
+                'amount' => $amount->toDecimal(),
+                'schedule' => $schedule,
+                'reason' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
+
+            throw $e;
         }
-
-        $withdrawId = Uuid::generate();
-
-        $withdraw = AccountWithdraw::createScheduled($withdrawId, $accountId, $method, $amount, $scheduledFor);
-
-        $this->withdrawRepository->save($withdraw, $methodData);
-
-        return $this->buildOutput($withdraw);
     }
 
     private function parseScheduleDate(string $schedule): DateTimeImmutable
     {
-        $clientTz = new DateTimeZone(self::CLIENT_TIMEZONE);
-        $utcTz = new DateTimeZone('UTC');
+        $clientTz = Timezone::CLIENT->toDateTimeZone();
+        $storageTz = Timezone::STORAGE->toDateTimeZone();
 
         $date = DateTimeImmutable::createFromFormat('Y-m-d H:i', $schedule, $clientTz);
 
@@ -133,9 +149,9 @@ class CreateWithdrawUseCase
             throw InvalidScheduleDateException::invalidFormat($schedule);
         }
 
-        $date = $date->setTimezone($utcTz);
+        $date = $date->setTimezone($storageTz);
 
-        if ($date <= new DateTimeImmutable('now', $utcTz)) {
+        if ($date <= new DateTimeImmutable('now', $storageTz)) {
             throw InvalidScheduleDateException::inThePast();
         }
 
@@ -151,7 +167,7 @@ class CreateWithdrawUseCase
             amount: (float) $withdraw->amount()->toDecimal(),
             scheduled: $withdraw->isScheduled(),
             scheduledFor: $withdraw->scheduledFor()
-                ?->setTimezone(new DateTimeZone(self::CLIENT_TIMEZONE))
+                ?->setTimezone(Timezone::CLIENT->toDateTimeZone())
                 ->format('Y-m-d H:i:s'),
             done: $withdraw->isDone(),
         );

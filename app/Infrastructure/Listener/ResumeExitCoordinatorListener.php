@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Listener;
+namespace App\Infrastructure\Listener;
 
 use Hyperf\Command\Event\AfterExecute;
 use Hyperf\Coordinator\Constants;

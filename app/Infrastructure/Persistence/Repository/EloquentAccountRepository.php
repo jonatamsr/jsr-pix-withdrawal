@@ -50,7 +50,7 @@ class EloquentAccountRepository implements AccountRepositoryInterface
     {
         $data = $this->mapper->toModel($account);
 
-        $this->model->newQuery()->updateOrInsert(
+        $this->model->newQuery()->updateOrCreate(
             ['id' => $data['id']],
             $data,
         );

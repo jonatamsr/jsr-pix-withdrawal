@@ -94,12 +94,5 @@ class ProcessScheduledWithdrawsUseCase
         });
 
         $this->eventDispatcher->dispatch(new WithdrawFailed($withdraw, $reason));
-
-        $this->logger->warning('Scheduled withdrawal failed', [
-            'withdraw_id' => $withdraw->id()->value(),
-            'account_id' => $withdraw->accountId()->value(),
-            'amount' => $withdraw->amount()->toDecimal(),
-            'reason' => $reason,
-        ]);
     }
 }

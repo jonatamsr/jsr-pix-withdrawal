@@ -11,8 +11,10 @@ use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\PixKey;
 use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Mail\Template\WithdrawCompletedEmailTemplate;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 /**
  * @internal
@@ -33,6 +35,7 @@ class WithdrawCompletedEmailTemplateTest extends TestCase
             'no-reply@test.local',
             $this->createWithdraw('100.00'),
             $this->createPix('user@example.com'),
+            new DateTimeImmutable(),
         );
 
         $fromAddresses = $email->getFrom();
@@ -47,6 +50,7 @@ class WithdrawCompletedEmailTemplateTest extends TestCase
             'no-reply@test.local',
             $this->createWithdraw('100.00'),
             $this->createPix('recipient@bank.com'),
+            new DateTimeImmutable(),
         );
 
         $toAddresses = $email->getTo();
@@ -61,6 +65,7 @@ class WithdrawCompletedEmailTemplateTest extends TestCase
             'no-reply@test.local',
             $this->createWithdraw('100.00'),
             $this->createPix('user@example.com'),
+            new DateTimeImmutable(),
         );
 
         $this->assertSame('PIX Withdrawal Completed', $email->getSubject());
@@ -69,13 +74,14 @@ class WithdrawCompletedEmailTemplateTest extends TestCase
     #[Test]
     public function buildHtmlContainsDateTime(): void
     {
-        $withdraw = $this->createWithdraw('250.00');
-        $expectedDate = $withdraw->createdAt()->format('Y-m-d H:i:s');
+        $processedAt = new DateTimeImmutable('2026-03-07 15:30:00');
+        $expectedDate = $processedAt->format('Y-m-d H:i:s');
 
         $email = $this->template->build(
             'no-reply@test.local',
-            $withdraw,
+            $this->createWithdraw('250.00'),
             $this->createPix('user@example.com'),
+            $processedAt,
         );
 
         $this->assertStringContainsString($expectedDate, $email->getHtmlBody());
@@ -88,6 +94,7 @@ class WithdrawCompletedEmailTemplateTest extends TestCase
             'no-reply@test.local',
             $this->createWithdraw('1500.99'),
             $this->createPix('user@example.com'),
+            new DateTimeImmutable(),
         );
 
         $this->assertStringContainsString('R$ 1500.99', $email->getHtmlBody());
@@ -100,6 +107,7 @@ class WithdrawCompletedEmailTemplateTest extends TestCase
             'no-reply@test.local',
             $this->createWithdraw('100.00'),
             $this->createPix('user@example.com'),
+            new DateTimeImmutable(),
         );
 
         $this->assertStringContainsString('email', $email->getHtmlBody());
@@ -112,9 +120,26 @@ class WithdrawCompletedEmailTemplateTest extends TestCase
             'no-reply@test.local',
             $this->createWithdraw('100.00'),
             $this->createPix('recipient@bank.com'),
+            new DateTimeImmutable(),
         );
 
         $this->assertStringContainsString('recipient@bank.com', $email->getHtmlBody());
+    }
+
+    #[Test]
+    public function buildThrowsExceptionWhenTemplateNotFound(): void
+    {
+        $template = new WithdrawCompletedEmailTemplate('/non/existent/template.html');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Email template not found: /non/existent/template.html');
+
+        $template->build(
+            'no-reply@test.local',
+            $this->createWithdraw('100.00'),
+            $this->createPix('user@example.com'),
+            new DateTimeImmutable(),
+        );
     }
 
     private function createWithdraw(string $amount): AccountWithdraw

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repository;
 
 use App\Domain\Entity\AccountWithdraw;
+use App\Domain\Enum\Timezone;
 use App\Domain\Port\WithdrawRepositoryInterface;
 use App\Domain\Strategy\PixWithdrawData;
 use App\Domain\Strategy\WithdrawMethodData;
@@ -56,7 +57,7 @@ class EloquentWithdrawRepository implements WithdrawRepositoryInterface
             ->where('scheduled', true)
             ->where('done', false)
             ->where('error', false)
-            ->where('scheduled_for', '<=', Carbon::now())
+            ->where('scheduled_for', '<=', Carbon::now(Timezone::STORAGE->value))
             ->get();
 
         $models->loadMissing($models->pluck('method')->unique()->all());

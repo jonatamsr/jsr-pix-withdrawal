@@ -21,4 +21,4 @@ XDEBUG_FLAGS=(
     -d "xdebug.idekey=VSCODE"
 )
 
-/usr/bin/docker compose exec -T app php "${XDEBUG_FLAGS[@]}" vendor/bin/phpunit -c phpunit.unit.xml "${ARGS[@]}"
+/usr/bin/docker compose exec -T app php "${XDEBUG_FLAGS[@]}" vendor/bin/phpunit "${ARGS[@]}"

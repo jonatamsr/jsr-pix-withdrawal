@@ -15,3 +15,8 @@ down: ## Para e remove os containers
 test: ## Roda os testes unitários
 	bash bin/phpunit.sh $(ARGS)
 
+cs-fix: ## Roda os testes unitários
+	docker compose exec app composer cs-fix
+
+logs: ## Mostra apenas logs da aplicação (Monolog)
+	docker compose logs -f | lnav

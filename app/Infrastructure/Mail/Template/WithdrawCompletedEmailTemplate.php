@@ -6,16 +6,22 @@ namespace App\Infrastructure\Mail\Template;
 
 use App\Domain\Entity\AccountWithdraw;
 use App\Domain\Entity\AccountWithdrawPix;
+use DateTimeImmutable;
 use RuntimeException;
 use Symfony\Component\Mime\Email;
 
 class WithdrawCompletedEmailTemplate
 {
-    private const TEMPLATE_PATH = __DIR__ . '/html/withdraw-completed.html';
+    private const DEFAULT_TEMPLATE_PATH = __DIR__ . '/html/withdraw-completed.html';
 
-    public function build(string $from, AccountWithdraw $withdraw, AccountWithdrawPix $pix): Email
+    public function __construct(
+        private readonly string $templatePath = self::DEFAULT_TEMPLATE_PATH,
+    ) {
+    }
+
+    public function build(string $from, AccountWithdraw $withdraw, AccountWithdrawPix $pix, DateTimeImmutable $processedAt): Email
     {
-        $dateTime = $withdraw->createdAt()->format('Y-m-d H:i:s');
+        $dateTime = $processedAt->format('Y-m-d H:i:s');
         $amount = $withdraw->amount()->toDecimal();
         $pixType = $pix->pixKey()->type()->value;
         $pixKey = $pix->pixKey()->key();
@@ -39,7 +45,7 @@ class WithdrawCompletedEmailTemplate
      */
     private function loadTemplate(array $placeholders): string
     {
-        $path = self::TEMPLATE_PATH;
+        $path = $this->templatePath;
 
         if (! file_exists($path)) {
             throw new RuntimeException("Email template not found: {$path}");

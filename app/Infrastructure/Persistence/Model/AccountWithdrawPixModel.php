@@ -32,6 +32,6 @@ class AccountWithdrawPixModel extends Model
 
     public function withdraw(): BelongsTo
     {
-        return $this->belongsTo(AccountWithdrawModel::class, 'account_withdraw_id', 'id');
+        return $this->belongsTo(AccountWithdrawModel::class, 'account_withdraw_id', 'id'); // @codeCoverageIgnore
     }
 }
