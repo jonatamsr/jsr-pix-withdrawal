@@ -88,7 +88,10 @@ Insert a test account with an initial balance:
 
 ```bash
 docker compose exec app php -r "
-    require 'vendor/autoload.php';
+    define('BASE_PATH', '/opt/www');
+    require BASE_PATH . '/vendor/autoload.php';
+    \Hyperf\Di\ClassLoader::init();
+    require BASE_PATH . '/config/container.php';
     \Hyperf\DbConnection\Db::connection()->insert(
         \"INSERT INTO account (id, name, balance, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())\",
         ['11111111-1111-1111-1111-111111111111', 'Test Account', 1000.00]
