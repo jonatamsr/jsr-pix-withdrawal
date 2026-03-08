@@ -319,7 +319,7 @@ curl -s -X POST http://localhost:9501/account/11111111-1111-1111-1111-1111111111
 | **API** | [http://localhost:9501](http://localhost:9501) | Hyperf application (Swoole HTTP server) |
 | **Mailhog UI** | [http://localhost:8025](http://localhost:8025) | View captured withdrawal notification emails |
 | **Jaeger UI** | [http://localhost:16686](http://localhost:16686) | Distributed tracing dashboard |
-| **MySQL** | http://localhost:3306 | Database (`hyperf` / `hyperf`) |
+| **MySQL** | http://localhost:3306 | Database (`root` / `root`) |
 | **Redis** | http://localhost:6379 | Cache, rate limiting, idempotency storage |
 
 ---
@@ -392,7 +392,7 @@ flowchart TB
         ENT_ACC["Account Entity"]:::domain
         ENT_WD["AccountWithdraw Entity"]:::domain
         ENT_PIX["AccountWithdrawPix Entity"]:::domain
-        VO["Value Objects<br/>(Money, Uuid, PixKey)"]:::domain
+        VO["Value Objects<br/>(Money, Uuid, PixKey, ScheduleDate)"]:::domain
         EVENTS["Domain Events<br/>(WithdrawCompleted, etc)"]:::domain
         STRAT["Strategies<br/>(PixWithdrawStrategy)"]:::domain
     end
@@ -667,7 +667,7 @@ sequenceDiagram
     Ctrl->>UC: execute(CreateWithdrawInput)
 
     UC->>Factory: create("pix")
-    UC->>UC: parseScheduleDate("2026-03-10 14:30")<br/>Convert SP → UTC, validate future
+    UC->>UC: ScheduleDate::fromString("2026-03-10 14:30")<br/>Convert SP → UTC, validate future
 
     UC->>AccRepo: findById(accountId)
     AccRepo->>MySQL: SELECT ... (no lock)
@@ -843,14 +843,10 @@ The project maintains **100% code coverage** across all layers — Application, 
 
 ### Structured Logging
 
-All logs are JSON-formatted to `stdout` and include `request_id` and `trace_id` for correlation:
+All logs are written to `stdout` using a human-readable line format and include `request_id` and `trace_id` for correlation (injected by `TraceContextProcessor`):
 
-```json
-{
-  "message": "Withdraw completed",
-  "context": { "withdraw_id": "...", "account_id": "...", "done": true },
-  "extra": { "request_id": "abc-123", "trace_id": "def-456" }
-}
+```
+[2026-03-08 03:24:28] default.INFO: Withdraw completed {"withdraw_id":"50369fd4-...","account_id":"550e8400-...","done":true,"scheduled":false} {"request_id":"4a53aa4c-...","trace_id":"ac05bb63c9e2..."}
 ```
 
 ### Distributed Tracing
