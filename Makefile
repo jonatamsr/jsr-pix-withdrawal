@@ -19,4 +19,4 @@ cs-fix: ## Roda os testes unitários
 	docker compose exec app composer cs-fix
 
 logs: ## Mostra apenas logs da aplicação (Monolog)
-	docker compose logs -f | lnav
+	docker compose logs app -f
