@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Infrastructure\Observability\TraceContextProcessor;
-use Monolog\Formatter\JsonFormatter;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
@@ -29,8 +28,8 @@ return [
         'formatter' => [
             'class' => LineFormatter::class,
             'constructor' => [
-                "format" => "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n",
-                "dateFormat" => "Y-m-d H:i:s",
+                'format' => "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n",
+                'dateFormat' => 'Y-m-d H:i:s',
             ],
         ],
         'processors' => [

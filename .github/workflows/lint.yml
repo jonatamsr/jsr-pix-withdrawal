@@ -90,7 +90,7 @@ jobs:
                 '',
                 table,
                 diffs ? '### Diffs\n\n' + diffs : '',
-                'Run `composer cs-fix` to fix automatically.',
+                'Run `make cs-fix` to fix automatically.',
               ].join('\n');
             }
 
