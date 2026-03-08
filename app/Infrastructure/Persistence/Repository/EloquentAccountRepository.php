@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repository;
 
 use App\Domain\Entity\Account;
-use App\Domain\Exception\AccountNotFoundException;
 use App\Domain\Port\AccountRepositoryInterface;
 use App\Domain\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Mapper\AccountMapper;
@@ -31,7 +30,7 @@ class EloquentAccountRepository implements AccountRepositoryInterface
         return $this->mapper->toDomain($found);
     }
 
-    public function findByIdWithLock(Uuid $id): Account
+    public function findByIdWithLock(Uuid $id): ?Account
     {
         /** @var null|AccountModel $found */
         $found = $this->model->newQuery()
@@ -40,7 +39,7 @@ class EloquentAccountRepository implements AccountRepositoryInterface
             ->first();
 
         if ($found === null) {
-            throw new AccountNotFoundException($id->value());
+            return null;
         }
 
         return $this->mapper->toDomain($found);

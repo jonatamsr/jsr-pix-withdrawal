@@ -260,7 +260,7 @@ class CreateWithdrawUseCaseTest extends TestCase
 
         $this->accountRepo->shouldReceive('findByIdWithLock')
             ->once()
-            ->andThrow(new AccountNotFoundException($accountId->value()));
+            ->andReturn(null);
 
         $this->eventDispatcher->shouldReceive('dispatch')
             ->once()

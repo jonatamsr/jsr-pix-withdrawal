@@ -9,20 +9,18 @@ use App\Application\DTO\CreateWithdrawOutput;
 use App\Application\Factory\WithdrawMethodFactory;
 use App\Domain\Entity\Account;
 use App\Domain\Entity\AccountWithdraw;
-use App\Domain\Enum\Timezone;
 use App\Domain\Enum\WithdrawMethod;
 use App\Domain\Event\WithdrawCompleted;
 use App\Domain\Event\WithdrawFailed;
 use App\Domain\Exception\AccountNotFoundException;
-use App\Domain\Exception\InvalidScheduleDateException;
 use App\Domain\Port\AccountRepositoryInterface;
 use App\Domain\Port\EventDispatcherInterface;
 use App\Domain\Port\TransactionManagerInterface;
 use App\Domain\Port\WithdrawRepositoryInterface;
 use App\Domain\Strategy\WithdrawMethodData;
 use App\Domain\ValueObject\Money;
+use App\Domain\ValueObject\ScheduleDate;
 use App\Domain\ValueObject\Uuid;
-use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -51,8 +49,8 @@ class CreateWithdrawUseCase
         $methodData = $strategy->validateAndBuild($input->methodData);
 
         $accountId = Uuid::fromString($input->accountId);
-        $amount = Money::fromFloat($input->amount);
         $withdrawMethod = WithdrawMethod::from(strtolower(trim($input->method)));
+        $amount = Money::fromFloat($input->amount);
 
         if ($input->schedule !== null) {
             $output = $this->handleScheduled($accountId, $withdrawMethod, $amount, $methodData, $input->schedule);
@@ -83,6 +81,9 @@ class CreateWithdrawUseCase
             /** @var Account $account */
             $account = $this->transactionManager->execute(function () use ($withdraw, $accountId, $amount, $methodData) {
                 $account = $this->accountRepository->findByIdWithLock($accountId);
+                if ($account === null) {
+                    throw new AccountNotFoundException($accountId->value());
+                }
 
                 $account->withdraw($amount);
 
@@ -110,7 +111,7 @@ class CreateWithdrawUseCase
         string $schedule,
     ): CreateWithdrawOutput {
         try {
-            $scheduledFor = $this->parseScheduleDate($schedule);
+            $scheduledFor = ScheduleDate::fromString($schedule);
 
             $account = $this->accountRepository->findById($accountId);
             if ($account === null) {
@@ -119,7 +120,7 @@ class CreateWithdrawUseCase
 
             $withdrawId = Uuid::generate();
 
-            $withdraw = AccountWithdraw::createScheduled($withdrawId, $accountId, $method, $amount, $scheduledFor);
+            $withdraw = AccountWithdraw::createScheduled($withdrawId, $accountId, $method, $amount, $scheduledFor->toDateTimeImmutable());
 
             $this->withdrawRepository->save($withdraw, $methodData);
 
@@ -138,26 +139,6 @@ class CreateWithdrawUseCase
         }
     }
 
-    private function parseScheduleDate(string $schedule): DateTimeImmutable
-    {
-        $clientTz = Timezone::CLIENT->toDateTimeZone();
-        $storageTz = Timezone::STORAGE->toDateTimeZone();
-
-        $date = DateTimeImmutable::createFromFormat('Y-m-d H:i', $schedule, $clientTz);
-
-        if ($date === false) {
-            throw InvalidScheduleDateException::invalidFormat($schedule);
-        }
-
-        $date = $date->setTimezone($storageTz);
-
-        if ($date <= new DateTimeImmutable('now', $storageTz)) {
-            throw InvalidScheduleDateException::inThePast();
-        }
-
-        return $date;
-    }
-
     private function buildOutput(AccountWithdraw $withdraw): CreateWithdrawOutput
     {
         return new CreateWithdrawOutput(
@@ -166,9 +147,9 @@ class CreateWithdrawUseCase
             method: $withdraw->method()->value,
             amount: (float) $withdraw->amount()->toDecimal(),
             scheduled: $withdraw->isScheduled(),
-            scheduledFor: $withdraw->scheduledFor()
-                ?->setTimezone(Timezone::CLIENT->toDateTimeZone())
-                ->format('Y-m-d H:i:s'),
+            scheduledFor: $withdraw->scheduledFor() !== null
+                ? ScheduleDate::fromDateTimeImmutable($withdraw->scheduledFor())->toClientString()
+                : null,
             done: $withdraw->isDone(),
         );
     }
