@@ -16,7 +16,7 @@ A microservice for processing **PIX withdrawal** operations built with the **[Hy
   - [Hexagonal Architecture](#hexagonal-architecture)
   - [Context Diagram (C4 Level 1)](#context-diagram-c4-level-1)
   - [Container Diagram (C4 Level 2)](#container-diagram-c4-level-2)
-  - [Component Diagram (C4 Level 3)](#component-diagram-c4-level-3)
+  - [Component Diagram — Hyperf API (C4 Level 3)](#component-diagram--hyperf-api-c4-level-3)
   - [Sequence Diagrams](#sequence-diagrams)
   - [Entity-Relationship Diagram](#entity-relationship-diagram)
 - [Running Tests](#running-tests)
@@ -347,7 +347,7 @@ Immediate withdrawals deduct the account balance inside a database transaction w
 
 ### Why Domain Events + Listeners?
 
-After a withdrawal completes, a `WithdrawCompleted` event is dispatched. The `SendWithdrawNotificationListener` sends an email notification asynchronously. This decouples the core withdrawal flow from notification delivery — if the mailer is down, the withdrawal still succeeds and the error is logged.
+After a withdrawal completes, a `WithdrawCompleted` event is dispatched. The `SendWithdrawNotificationListener` delegates to `WithdrawNotificationStrategyFactory`, which resolves the appropriate notification strategy (e.g. `PixWithdrawNotificationStrategy`) and sends the email via `SymfonyMailerService`. Failed scheduled withdrawals dispatch a `WithdrawFailed` event handled by `LogWithdrawFailedListener`. This decouples the core withdrawal flow from notification delivery — if the mailer is down, the withdrawal still succeeds and the error is logged.
 
 ### Why Strategy Pattern for Withdrawal Methods?
 
@@ -395,8 +395,8 @@ flowchart TB
         ENT_ACC["Account Entity"]:::domain
         ENT_WD["AccountWithdraw Entity"]:::domain
         ENT_PIX["AccountWithdrawPix Entity"]:::domain
-        VO["Value Objects<br/>(Money, Uuid, PixKey, ScheduleDate)"]:::domain
-        EVENTS["Domain Events<br/>(WithdrawCompleted, etc)"]:::domain
+        VO["Value Objects<br/>(Money, Uuid, PixKey, PendingWithdrawal)"]:::domain
+        EVENTS["Domain Events<br/>(WithdrawCompleted, WithdrawFailed)"]:::domain
         STRAT["Strategies<br/>(PixWithdrawStrategy)"]:::domain
     end
 
@@ -411,9 +411,13 @@ flowchart TB
     subgraph DrivenAdapters ["🔌 Driven Adapters"]
         REPO_ACC["EloquentAccountRepository"]:::adapter
         REPO_WD["EloquentWithdrawRepository"]:::adapter
-        EVT_ADAPTER["HyperfEventAdapter"]:::adapter
+        EVT_ADAPTER["HyperfEventDispatcherAdapter"]:::adapter
         TX_ADAPTER["DbTransactionManager"]:::adapter
         RL_ADAPTER["TokenBucketRateLimiter"]:::adapter
+        NOTIF_LISTENER["SendWithdrawNotificationListener"]:::adapter
+        LOG_LISTENER["LogWithdrawFailedListener"]:::adapter
+        NOTIF_FACTORY["WithdrawNotificationStrategyFactory"]:::adapter
+        NOTIF_STRAT["PixWithdrawNotificationStrategy"]:::adapter
         MAILER["SymfonyMailerService"]:::adapter
         TRACER["OTelTracer Output"]:::adapter
     end
@@ -448,11 +452,20 @@ flowchart TB
     REPO_WD --> MYSQL
     TX_ADAPTER --> MYSQL
     RL_ADAPTER --> REDIS
-    EVT_ADAPTER -->|"WithdrawCompleted"| MAILER --> MAILHOG
+    EVT_ADAPTER -->|"WithdrawCompleted"| NOTIF_LISTENER --> NOTIF_FACTORY --> NOTIF_STRAT --> MAILER --> MAILHOG
+    EVT_ADAPTER -->|"WithdrawFailed"| LOG_LISTENER
     TRACER --> JAEGER
 ```
 
 ---
+
+> **Structurizr DSL** — This project includes a [`workspace.dsl`](workspace.dsl) file with the full C4 model (context, containers, components and dynamic views). To explore the interactive diagrams locally:
+>
+> ```bash
+> docker run -it --rm -p 8080:8080 -v $(pwd):/usr/local/structurizr structurizr/lite
+> ```
+>
+> Then open [http://localhost:8080](http://localhost:8080). The C4 Mermaid diagrams below are a simpler static snapshot of the same model.
 
 ### Context Diagram (C4 Level 1)
 
@@ -500,11 +513,12 @@ flowchart TB
     MAIL["📧 <b>Mailhog</b><br/><span style='font-size:12px;color:#94a3b8'>SMTP 1025 / UI 8025</span>"]:::ext
     JAE["📊 <b>Jaeger</b><br/><span style='font-size:12px;color:#94a3b8'>OTLP 4318 / UI 16686</span>"]:::ext
 
-    USER == "JSON HTTP" ==> API
+    USER == "JSON HTTPS" ==> API
     API ==>|"TCP 3306"| MYSQL
     API ==>|"TCP 6379"| REDIS
     CRON -->|"TCP 3306"| MYSQL
     CRON -->|"TCP 6379"| REDIS
+    CRON -->|"triggers"| API
 
     API -.->|"SMTP 1025"| MAIL
     CRON -.->|"SMTP 1025"| MAIL
@@ -515,7 +529,7 @@ flowchart TB
 
 ---
 
-### Component Diagram (C4 Level 3)
+### Component Diagram — Hyperf API (C4 Level 3)
 
 ```mermaid
 %%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'ui-sans-serif, system-ui', 'primaryColor': '#1e293b', 'primaryBorderColor': '#334155', 'lineColor': '#94a3b8'}}}%%
@@ -523,17 +537,19 @@ flowchart TB
     classDef mw fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fee2e2,rx:6px
     classDef ctrl fill:#082f49,stroke:#0ea5e9,stroke-width:2px,color:#e0f2fe,rx:6px
     classDef uc fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#e0e7ff,rx:6px
+    classDef domain fill:#052e16,stroke:#22c55e,stroke-width:2px,color:#dcfce7,rx:6px
+    classDef port fill:#411f02,stroke:#f59e0b,stroke-width:2px,stroke-dasharray: 5 5,color:#fef3c7,rx:6px
     classDef infra fill:#0f172a,stroke:#64748b,stroke-width:2px,color:#f8fafc,rx:6px
-    classDef ext fill:#052e16,stroke:#22c55e,stroke-width:2px,color:#dcfce7,rx:6px,stroke-dasharray: 4 4
+    classDef ext fill:#1e293b,stroke:#64748b,stroke-width:2px,color:#f8fafc,rx:6px,stroke-dasharray: 4 4
 
     subgraph Middlewares ["🛡️ HTTP Middlewares"]
         direction LR
-        MW_REQ["RequestId"]:::mw
-        MW_IDEM["Idempotency"]:::mw
-        MW_RATE["RateLimit"]:::mw
+        MW_REQ["RequestIdMiddleware"]:::mw
+        MW_IDEM["IdempotencyMiddleware"]:::mw
+        MW_RATE["RateLimitMiddleware"]:::mw
     end
 
-    subgraph Controllers ["🌐 Rest Controllers"]
+    subgraph Controllers ["🌐 Controllers"]
         direction LR
         CTRL["AccountWithdrawController"]:::ctrl
         HEALTH["HealthController"]:::ctrl
@@ -541,16 +557,39 @@ flowchart TB
 
     subgraph Application ["⚙️ Application Layer"]
         UC_CREATE["CreateWithdrawUseCase"]:::uc
-        UC_PROC["ProcessScheduledWithdraws"]:::uc
-        FACT["WithdrawMethodFactory<br/>(PixWithdrawStrategy)"]:::uc
+        UC_PROC["ProcessScheduledWithdrawsUseCase"]:::uc
+        FACT["WithdrawMethodFactory"]:::uc
+        STRAT["PixWithdrawStrategy"]:::domain
+    end
+
+    subgraph DomainCore ["💎 Domain"]
+        direction LR
+        ENT_ACC["Account"]:::domain
+        ENT_WD["AccountWithdraw"]:::domain
+        ENT_PIX["AccountWithdrawPix"]:::domain
+        VO["Money · Uuid · PixKey<br/>PendingWithdrawal"]:::domain
+        EVENTS["WithdrawCompleted<br/>WithdrawFailed"]:::domain
+    end
+
+    subgraph Ports ["🚪 Ports"]
+        direction LR
+        P_ACC["AccountRepositoryInterface"]:::port
+        P_WD["WithdrawRepositoryInterface"]:::port
+        P_EVT["EventDispatcherInterface"]:::port
+        P_TX["TransactionManagerInterface"]:::port
+        P_RL["RateLimiterInterface"]:::port
     end
 
     subgraph Infrastructure ["🏗️ Driven Adapters"]
-        REPO_ACC["AccountRepository"]:::infra
-        REPO_WD["WithdrawRepository"]:::infra
+        REPO_ACC["EloquentAccountRepository"]:::infra
+        REPO_WD["EloquentWithdrawRepository"]:::infra
         TX["DbTransactionManager"]:::infra
-        EVT["EventDispatcher"]:::infra
-        LISTENER["Listeners<br/>(Log, Notification)"]:::infra
+        EVT["HyperfEventDispatcherAdapter"]:::infra
+        RL_ADAPTER["TokenBucketRateLimiter"]:::infra
+        NOTIF_LISTENER["SendWithdrawNotificationListener"]:::infra
+        LOG_LISTENER["LogWithdrawFailedListener"]:::infra
+        NOTIF_FACTORY["WithdrawNotificationStrategyFactory"]:::infra
+        NOTIF_STRAT["PixWithdrawNotificationStrategy"]:::infra
         MAILER["SymfonyMailerService"]:::infra
     end
 
@@ -558,16 +597,33 @@ flowchart TB
     REDIS[("fa:fa-server Redis")]:::ext
     MAILHOG["fa:fa-envelope Mailhog"]:::ext
 
-    Middlewares ==> Controllers
+    MW_REQ --> MW_IDEM --> MW_RATE --> Controllers
     CTRL ==> UC_CREATE
-    UC_CREATE ==> REPO_ACC & REPO_WD & TX & EVT
-    UC_PROC ==> REPO_ACC & REPO_WD & TX & EVT
+    UC_CREATE --> FACT --> STRAT
 
-    EVT -.-> LISTENER
-    LISTENER -.-> MAILER
+    UC_CREATE ==> P_ACC & P_WD & P_TX & P_EVT
+    UC_PROC ==> P_ACC & P_WD & P_TX & P_EVT
+    MW_RATE --> P_RL
+
+    P_ACC --> ENT_ACC
+    P_WD --> ENT_WD
+    ENT_WD & ENT_ACC --> VO
+    P_EVT --> EVENTS
+
+    P_ACC -.->|"impl"| REPO_ACC
+    P_WD -.->|"impl"| REPO_WD
+    P_TX -.->|"impl"| TX
+    P_EVT -.->|"impl"| EVT
+    P_RL -.->|"impl"| RL_ADAPTER
+
+    EVT -.->|"WithdrawCompleted"| NOTIF_LISTENER
+    EVT -.->|"WithdrawFailed"| LOG_LISTENER
+    NOTIF_LISTENER -.-> NOTIF_FACTORY
+    NOTIF_FACTORY -.-> NOTIF_STRAT
+    NOTIF_STRAT -.-> MAILER
 
     REPO_ACC & REPO_WD & TX -.-> MYSQL
-    MW_IDEM & MW_RATE -.-> REDIS
+    MW_IDEM & RL_ADAPTER -.-> REDIS
     MAILER -.->|"SMTP"| MAILHOG
 ```
 
@@ -591,8 +647,10 @@ sequenceDiagram
     participant TX as TransactionManager
     participant AccRepo as AccountRepository
     participant WdRepo as WithdrawRepository
-    participant EvtDisp as EventDispatcher
-    participant Listener as SendNotificationListener
+    participant EvtDisp as HyperfEventDispatcherAdapter
+    participant Listener as SendWithdrawNotificationListener
+    participant NotifFactory as WithdrawNotificationStrategyFactory
+    participant NotifStrat as PixWithdrawNotificationStrategy
     participant Mailer as SymfonyMailerService
     participant Redis
     participant MySQL
@@ -635,9 +693,12 @@ sequenceDiagram
 
     UC->>EvtDisp: dispatch(WithdrawCompleted)
     EvtDisp->>Listener: process(WithdrawCompleted)
-    Listener->>Mailer: sendWithdrawCompleted()
+    Listener->>NotifFactory: create(PIX)
+    NotifFactory-->>Listener: PixWithdrawNotificationStrategy
+    Listener->>NotifStrat: notify(withdraw, methodData)
+    NotifStrat->>Mailer: sendWithdrawCompleted()
     Mailer->>Mailer: Render HTML template
-    Mailer-->>Listener: Email sent via SMTP
+    Mailer-->>NotifStrat: Email sent via SMTP
 
     UC-->>Ctrl: CreateWithdrawOutput
     Ctrl-->>MW_ID: Response 201
@@ -669,7 +730,7 @@ sequenceDiagram
     Ctrl->>UC: execute(CreateWithdrawInput)
 
     UC->>Factory: create("pix")
-    UC->>UC: ScheduleDate::fromString("2026-03-10 14:30")<br/>Convert SP → UTC, validate future
+    UC->>UC: parseScheduleDate("2026-03-10 14:30")<br/>Convert SP → UTC, validate future
 
     UC->>AccRepo: findById(accountId)
     AccRepo->>MySQL: SELECT ... (no lock)
@@ -697,7 +758,7 @@ sequenceDiagram
     participant WdRepo as WithdrawRepository
     participant AccRepo as AccountRepository
     participant TX as TransactionManager
-    participant EvtDisp as EventDispatcher
+    participant EvtDisp as HyperfEventDispatcherAdapter
     participant MySQL
 
     Cron->>UC: execute()
