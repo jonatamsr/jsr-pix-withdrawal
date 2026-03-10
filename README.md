@@ -11,6 +11,7 @@ A microservice for processing **PIX withdrawal** operations built with the **[Hy
 - [Quick Start](#quick-start)
 - [API Documentation](#api-documentation)
 - [Service URLs](#service-urls)
+- [Dev Tools (optional)](#dev-tools-optional)
 - [Technical Decisions](#technical-decisions)
 - [Architecture Diagrams](#architecture-diagrams)
   - [Hexagonal Architecture](#hexagonal-architecture)
@@ -324,6 +325,35 @@ curl -s -X POST http://localhost:9501/account/11111111-1111-1111-1111-1111111111
 | **Jaeger UI** | [http://localhost:16686](http://localhost:16686) | Distributed tracing dashboard |
 | **MySQL** | http://localhost:3306 | Database (`root` / `root`) |
 | **Redis** | http://localhost:6379 | Cache, rate limiting, idempotency storage |
+| **Adminer** | [http://localhost:8081](http://localhost:8081) | Lightweight DB UI (`--profile tools`) |
+| **Structurizr Lite** | [http://localhost:8080](http://localhost:8080) | Interactive C4 architecture diagrams (`--profile tools`) |
+
+---
+
+## Dev Tools (optional)
+
+**Adminer** and **Structurizr Lite** are declared in `docker-compose.yml` under the `tools` profile. They never start with a plain `make up` — only when explicitly requested.
+
+```bash
+make adminer      # DB UI    → http://localhost:8081
+make structurizr  # C4 diagrams → http://localhost:8080
+```
+
+### Adminer — Database UI
+
+Open [http://localhost:8081](http://localhost:8081) and log in with:
+
+| Field | Value |
+|---|---|
+| **System** | MySQL |
+| **Server** | `mysql` |
+| **Username** | `root` |
+| **Password** | `root` |
+| **Database** | `jsr_pix_withdrawal` |
+
+### Structurizr Lite — Architecture Diagrams
+
+Open [http://localhost:8080](http://localhost:8080) to browse the interactive C4 diagrams generated from [`workspace.dsl`](workspace.dsl).
 
 ---
 
@@ -459,13 +489,7 @@ flowchart TB
 
 ---
 
-> **Structurizr DSL** — This project includes a [`workspace.dsl`](workspace.dsl) file with the full C4 model (context, containers, components and dynamic views). To explore the interactive diagrams locally:
->
-> ```bash
-> docker run -it --rm -p 8080:8080 -v $(pwd):/usr/local/structurizr structurizr/lite
-> ```
->
-> Then open [http://localhost:8080](http://localhost:8080). The C4 Mermaid diagrams below are a simpler static snapshot of the same model.
+> **Structurizr DSL** — This project includes a [`workspace.dsl`](workspace.dsl) file with the full C4 model (context, containers, components and dynamic views). To explore the interactive diagrams locally, start the `structurizr` service (see [Dev Tools](#dev-tools-optional)) and open [http://localhost:8080](http://localhost:8080). The C4 Mermaid diagrams below are a simpler static snapshot of the same model.
 
 ### Context Diagram (C4 Level 1)
 
