@@ -1,4 +1,4 @@
-.PHONY: setup up down test
+.PHONY: setup up down test adminer structurizr
 
 setup: ## Configura o .env com UID/GID do usuário atual e sobe os containers
 	@if [ ! -f .env ]; then cp .env.example .env; fi
@@ -20,3 +20,9 @@ cs-fix: ## Roda os testes unitários
 
 logs: ## Mostra apenas logs da aplicação (Monolog)
 	docker compose logs app -f
+
+adminer: ## Sobe o Adminer (DB UI) em http://localhost:8081
+	docker compose --profile tools up -d adminer
+
+structurizr: ## Sobe o Structurizr Lite (diagramas C4) em http://localhost:8080
+	docker compose --profile tools up -d structurizr
